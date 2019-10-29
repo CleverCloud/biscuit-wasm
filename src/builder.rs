@@ -75,6 +75,7 @@ pub struct BiscuitBuilderBind {
     symbols: SymbolTable,
     facts: Vec<datalog::Fact>,
     rules: Vec<datalog::Rule>,
+    caveats: Vec<datalog::Rule>,
 }
 
 #[wasm_bindgen()]
@@ -87,6 +88,7 @@ impl BiscuitBuilderBind {
             symbols: base_symbols,
             facts: vec![],
             rules: vec![],
+            caveats: vec![],
         }
     }
 
@@ -98,6 +100,7 @@ impl BiscuitBuilderBind {
             symbols,
             facts: vec![],
             rules: vec![],
+            caveats: vec![],
         }
     }
 
@@ -123,6 +126,12 @@ impl BiscuitBuilderBind {
         self.rules.push(r);
     }
 
+    #[wasm_bindgen(js_name = addAuthorityCaveat)]
+    pub fn add_authority_caveat(&mut self, rule_bind: RuleBind) {
+        let r = rule_bind.rule.convert(&mut self.symbols);
+        self.caveats.push(r);
+    }
+
     #[wasm_bindgen(js_name = addRight)]
     pub fn add_right(&mut self, resource: &str, right: &str) {
         self.add_authority_fact(FactBind(Predicate{
@@ -142,7 +151,8 @@ impl BiscuitBuilderBind {
             index: 0,
             symbols: self.symbols,
             facts: self.facts,
-            caveats: self.rules,
+            rules: self.rules,
+            caveats: self.caveats,
         };
 
         Biscuit::new(&mut rng, &root, authority_block).map_err(|e| JsValue::from_serde(&e).unwrap())

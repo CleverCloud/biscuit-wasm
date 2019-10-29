@@ -40,6 +40,7 @@ impl BlockBind {
             index,
             symbols: symbols.0,
             facts: vec![],
+            rules: vec![],
             caveats: vec![],
         })
     }
@@ -78,6 +79,12 @@ impl BlockBuilderBind {
         self.0.facts.push(f);
     }
 
+    #[wasm_bindgen(js_name = addRule)]
+    pub fn add_rule(&mut self, rule: RuleBind) {
+        let r = rule.get_inner_rule().convert(&mut self.0.symbols);
+        self.0.rules.push(r);
+    }
+
     #[wasm_bindgen(js_name = addCaveat)]
     pub fn add_caveat(&mut self, caveat: RuleBind) {
         let c = caveat.get_inner_rule().convert(&mut self.0.symbols);
@@ -94,6 +101,7 @@ impl BlockBuilderBind {
             index: self.0.index,
             symbols: self.0.symbols,
             facts: self.0.facts,
+            rules: self.0.rules,
             caveats: self.0.caveats,
         })
     }
