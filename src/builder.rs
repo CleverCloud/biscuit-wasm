@@ -82,10 +82,11 @@ pub struct BiscuitBuilderBind {
 impl BiscuitBuilderBind {
     #[wasm_bindgen(constructor)]
     pub fn new(base_symbols: JsValue) -> Self {
-        let base_symbols: SymbolTable = base_symbols.into_serde().expect("bad symbols table format");
+        let symbol_strings: Vec<String> = base_symbols.into_serde().expect("Can't format symbols table");
+        let symbols = SymbolTable { symbols: symbol_strings };
         Self {
-            symbols_start: base_symbols.symbols.len(),
-            symbols: base_symbols,
+            symbols_start: symbols.symbols.len(),
+            symbols,
             facts: vec![],
             rules: vec![],
             caveats: vec![],
@@ -141,7 +142,7 @@ impl BiscuitBuilderBind {
     }
 
     #[wasm_bindgen]
-    pub fn build(mut self,root: KeyPair) -> Result<BiscuitBinder, JsValue> {
+    pub fn build(mut self, root: crate::crypto::KeyPairBind) -> Result<BiscuitBinder, JsValue> {
         let mut rng = OsRng::new().expect("os range");
         let new_syms = self.symbols.symbols.split_off(self.symbols_start);
 
@@ -155,7 +156,7 @@ impl BiscuitBuilderBind {
             caveats: self.caveats,
         };
 
-        Biscuit::new(&mut rng, &root, authority_block).map_err(|e| JsValue::from_serde(&e).unwrap())
+        Biscuit::new(&mut rng, &root.0, authority_block).map_err(|e| JsValue::from_serde(&e).unwrap())
             .map(|biscuit| BiscuitBinder(biscuit))
     }
 }

@@ -84,31 +84,25 @@ impl Verifier {
     }
 
     #[wasm_bindgen]
-    pub fn verify(&self, biscuit: BiscuitBinder) -> Result<(), JsValue> {
-        let mut symbols = biscuit.0.symbols().clone();
-
-        let mut ambient_facts = vec![];
-        let mut ambient_rules = vec![];
-        let mut authority_caveats = vec![];
-        let mut block_caveats = vec![];
+    pub fn verify(&self, root_key: &crate::crypto::PublicKeyBind, biscuit: BiscuitBinder) -> Result<(), JsValue> {
+        let mut verifier = &biscuit.0.verify(root_key.0).map_err(|e| JsValue::from_serde(&e).expect("error serde"))?;
 
         for fact in self.facts.iter() {
-            ambient_facts.push(fact.convert(&mut symbols));
+            verifier.add_fact(fact.clone());
         }
 
         for rule in self.rules.iter() {
-            ambient_rules.push(rule.convert(&mut symbols));
+            verifier.add_rule(rule.clone());
         }
 
         for caveat in self.authority_caveats.iter() {
-            authority_caveats.push(caveat.convert(&mut symbols));
+            verifier.add_authority_caveat(caveat.clone());
         }
 
         for caveat in self.block_caveats.iter() {
-            block_caveats.push(caveat.convert(&mut symbols));
+            verifier.add_block_caveat(caveat.clone());
         }
 
-        biscuit.0.check(&symbols, ambient_facts, ambient_rules, authority_caveats, block_caveats)
-            .map_err(|e| JsValue::from_serde(&e).expect("error serde"))
+        verifier.verify().map_err(|e| JsValue::from_serde(&e).expect("error serde"))
     }
 }

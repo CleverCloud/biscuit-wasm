@@ -64,7 +64,8 @@ pub struct BlockBuilderBind(BlockBuilder);
 impl BlockBuilderBind {
     #[wasm_bindgen(constructor)]
     pub fn new(index: u32, symbols: JsValue) -> Self {
-        let symbols = symbols.into_serde().expect("Can't format symbols table");
+        let symbol_strings: Vec<String> = symbols.into_serde().expect("Can't format symbols table");
+        let symbols = SymbolTable { symbols: symbol_strings };
         Self(BlockBuilder::new(index, symbols))
     }
 
@@ -114,16 +115,16 @@ pub struct BiscuitBinder(Biscuit);
 #[wasm_bindgen]
 impl BiscuitBinder {
     #[wasm_bindgen(constructor)]
-    pub fn  new(root: &KeyPair, block: BlockBind) -> Result<BiscuitBinder, JsValue> {
+    pub fn  new(root: &crypto::KeyPairBind, block: BlockBind) -> Result<BiscuitBinder, JsValue> {
         let mut rng = OsRng::new().expect("can't create OS rng");
 
-        Biscuit::new(&mut rng, root, block.0)
+        Biscuit::new(&mut rng, &root.0, block.0)
             .map_err(|e| JsValue::from_serde(&e).expect("error serde"))
             .map(|biscuit| BiscuitBinder(biscuit))
     }
 
 
-    pub fn from_biscuit(biscuit: &Biscuit) -> Self {
+    fn from_biscuit(biscuit: &Biscuit) -> Self {
         BiscuitBinder(biscuit.clone())
     }
 
@@ -143,7 +144,7 @@ impl BiscuitBinder {
 
     #[wasm_bindgen(js_name = toVec)]
     pub fn to_vec(&self) -> Result<Vec<u8>, JsValue> {
-        match self.0.clone().get_container().as_ref() {
+        match self.0.clone().container().as_ref() {
             None => Err(JsValue::from_serde(&error::Token::InternalError).unwrap()),
             Some(c) => c.to_vec().map_err(|e| JsValue::from_serde(&e).unwrap()),
         }
@@ -151,17 +152,17 @@ impl BiscuitBinder {
 
     #[wasm_bindgen(js_name = createBlock)]
     pub fn create_block(&self) -> BlockBuilderBind {
-        BlockBuilderBind(BlockBuilder::new((1 + self.0.blocks().len()) as u32, self.0.symbols().clone()))
+        BlockBuilderBind(self.0.create_block())
     }
 
     #[wasm_bindgen]
     pub fn append(
         &self,
-        keypair: KeyPair,
+        keypair: crypto::KeyPairBind,
         block: BlockBind,
     ) -> Result<BiscuitBinder, JsValue> {
         let mut rng = OsRng::new().expect("can't create OS rng");
-        self.0.append(&mut rng, &keypair, block.0)
+        self.0.append(&mut rng, &keypair.0, block.0)
             .map_err(|e| JsValue::from_serde(&e).expect("error append"))
             .map(|biscuit| BiscuitBinder(biscuit))
     }
