@@ -22,28 +22,30 @@ let keypair = wasm.newKeypair()
 // the first block of the token is the authority block. It contains global
 // information like which operation types are available
 let builder = wasm.BiscuitBuilderBind.newWithDefaultSymbols()
-let fact = wasm.factBind("right", [
+
+// let's define some access rights
+// every fact added to the authority block must have the authority fact
+let fact = wasm.fact("right", [
     { Symbol: "authority" },
     { Str: "file1" },
     { Symbol: "read" }
 ])
 
-// let's define some access rights
-// every fact added to the authority block must have the authority fact
 builder.addAuthorityFact(fact)
 
-fact = wasm.factBind("right", [
+fact = wasm.fact("right", [
     { Symbol: "authority" },
     { Str: "file2" },
     { Symbol: "read" }
 ])
 builder.addAuthorityFact(fact)
 
-fact = wasm.factBind("right", [
+fact = wasm.fact("right", [
     { Symbol: "authority" },
     { Str: "file1" },
     { Symbol: "write" }
 ])
+
 builder.addAuthorityFact(fact)
 
 // we can now create the token
@@ -59,18 +61,18 @@ let biscuit2 = biscuit.append(keypair2, block)
 // for /a/file2.txt and a read operation
 let verifier = new wasm.Verifier()
 
-// we will check that the token has the corresponding right
-let rule = wasm.ruleBind(
+let rule = wasm.rule(
     "right",
     [{ Symbol: "right" }],
     [
-    {
-        name: "right",
-        ids: [{ Symbol: "authority" }, { Str: "file2" }, { Symbol: "write" }]
-    }
+        {
+            name: "right",
+            ids: [{ Symbol: "authority" }, { Str: "file2" }, { Symbol: "write" }]
+        }
     ]
 )
 
+// we will check that the token has the corresponding right
 verifier.addAuthorityCaveat(rule)
 verifier.verify(biscuit2)
 ```
