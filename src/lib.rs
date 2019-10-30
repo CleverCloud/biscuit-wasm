@@ -1,8 +1,6 @@
-use biscuit::token::builder::{BlockBuilder};
 use biscuit::datalog::SymbolTable;
 use biscuit::token::*;
 use biscuit;
-use biscuit::crypto::KeyPair;
 use wasm_bindgen::prelude::*;
 use rand::rngs::OsRng;
 
@@ -79,16 +77,12 @@ impl BiscuitBinder {
         }
     }
 
-    fn from_biscuit(biscuit: &Biscuit) -> Self {
-        BiscuitBinder(biscuit.clone())
-    }
-
     #[wasm_bindgen]
     pub fn from(slice: &[u8]) -> Result<BiscuitBinder, JsValue> {
         Biscuit::from(slice)
             .map_err(|e| { let e: error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).expect("biscuit from error"))
-            .map(|biscuit| BiscuitBinder(biscuit))
+            .map(BiscuitBinder)
     }
 
     #[wasm_bindgen(js_name = fromSealed)]
@@ -96,7 +90,7 @@ impl BiscuitBinder {
         Biscuit::from_sealed(slice, secret)
             .map_err(|e| { let e: error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).expect("biscuit from error"))
-            .map(|biscuit| BiscuitBinder(biscuit))
+            .map(BiscuitBinder)
     }
 
     #[wasm_bindgen(js_name = toVec)]
@@ -140,6 +134,6 @@ impl BiscuitBinder {
         self.0.append(&mut rng, &keypair.0, block)
             .map_err(|e| { let e: error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).expect("error append"))
-            .map(|biscuit| BiscuitBinder(biscuit))
+            .map(BiscuitBinder)
     }
 }

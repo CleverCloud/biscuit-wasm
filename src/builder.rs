@@ -1,7 +1,6 @@
 use biscuit::token::builder;
-use biscuit::token::{Biscuit, Block};
+use biscuit::token::Biscuit;
 use biscuit::token::default_symbol_table;
-use biscuit::crypto::KeyPair;
 use biscuit::datalog::{self, SymbolTable};
 use wasm_bindgen::prelude::*;
 use rand::rngs::OsRng;
@@ -167,12 +166,12 @@ impl BiscuitBuilderBind {
     }
 
     #[wasm_bindgen(js_name = addAuthorityFact)]
-    pub fn add_authority_fact(&mut self, mut fact: FactBind) {
+    pub fn add_authority_fact(&mut self, fact: FactBind) {
         self.facts.push(fact);
     }
 
     #[wasm_bindgen(js_name = addAuthorityRule)]
-    pub fn add_authority_rule(&mut self, mut rule_bind: RuleBind) {
+    pub fn add_authority_rule(&mut self, rule_bind: RuleBind) {
         self.rules.push(rule_bind);
     }
 
@@ -193,7 +192,7 @@ impl BiscuitBuilderBind {
     }
 
     #[wasm_bindgen]
-    pub fn build(mut self, root: crate::crypto::KeyPairBind) -> Result<BiscuitBinder, JsValue> {
+    pub fn build(self, root: crate::crypto::KeyPairBind) -> Result<BiscuitBinder, JsValue> {
         let mut rng = OsRng::new().expect("os range");
         let symbols = self.symbols;
         let mut builder = Biscuit::builder_with_symbols(&mut rng, &root.0, symbols);
@@ -213,7 +212,7 @@ impl BiscuitBuilderBind {
         builder.build()
             .map_err(|e| { let e: crate::error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).unwrap())
-            .map(|biscuit| BiscuitBinder(biscuit))
+            .map(BiscuitBinder)
     }
 }
 
