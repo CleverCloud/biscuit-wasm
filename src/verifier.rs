@@ -107,6 +107,8 @@ impl Verifier {
             verifier.add_block_caveat(caveat.clone());
         }
 
-        verifier.verify().map_err(|e| crate::error::Error::FailedLogic(e.into())).map_err(|e| JsValue::from_serde(&e).expect("error serde"))
+        verifier.verify()
+          .map_err(|e| {let e: crate::error::Error = e.into(); e})
+          .map_err(|e| JsValue::from_serde(&e).expect("error serde"))
     }
 }

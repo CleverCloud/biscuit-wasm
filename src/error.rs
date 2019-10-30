@@ -13,6 +13,8 @@ pub enum Error {
     InvalidBlockIndex(InvalidBlockIndex),
     /// multiple blocks declare the same symbols
     SymbolTableOverlap,
+    /// the symbol table is missing either "authority" or "ambient"
+    MissingSymbols,
     /// tried to append a block to a sealed token
     Sealed,
     /// caveat validation failed
@@ -27,6 +29,7 @@ impl From<error::Token> for Error {
         error::Token::InvalidAuthorityIndex(i) => Error::InvalidAuthorityIndex(i),
         error::Token::InvalidBlockIndex(i) => Error::InvalidBlockIndex(i.into()),
         error::Token::SymbolTableOverlap => Error::SymbolTableOverlap,
+        error::Token::MissingSymbols => Error::MissingSymbols,
         error::Token::Sealed => Error::Sealed,
         error::Token::FailedLogic(l) => Error::FailedLogic(l.into()),
       }
