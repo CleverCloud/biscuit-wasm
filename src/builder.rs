@@ -65,7 +65,6 @@ pub fn variable(i: u32) -> JsValue {
   JsValue::from_serde(&AtomBind { variable: Some(i), ..Default::default() }).unwrap()
 }
 
-//#[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PredicateBind {
   pub name: String,
@@ -105,7 +104,6 @@ pub fn fact_bind(name: &str, ids: JsValue) -> FactBind {
 #[wasm_bindgen()]
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct RuleBind{
-    //rule: builder::Rule
     head_name: String,
     head_ids: Vec<AtomBind>,
     predicates: Vec<PredicateBind>,
@@ -113,8 +111,7 @@ pub struct RuleBind{
 }
 
 impl RuleBind {
-    pub fn get_inner_rule(mut self) -> builder::Rule {
-        //self.rule
+    pub fn into_rule(mut self) -> builder::Rule {
         let head_ids = self.head_ids.drain(..).map(|a| a.into_atom()).collect::<Vec<_>>();
         let predicates = self.predicates.drain(..).map(|p| p.into_predicate()).collect::<Vec<_>>();
         builder::rule(&self.head_name, &head_ids, &predicates)
@@ -128,23 +125,20 @@ pub fn rule_bind(
     predicates: JsValue,
 ) -> RuleBind {
     let head_ids: Vec<AtomBind> = head_ids.into_serde().expect("incorrect atom vec");
-    //let head_ids: Vec<builder::Atom> = head_ids.drain(..).map(|a| a.into_atom()).collect();
     let predicates: Vec<PredicateBind> = predicates.into_serde().unwrap();
     RuleBind {
         head_name: head_name.to_string(),
         head_ids,
         predicates,
-        //rule: builder::rule(head_name, head_ids.as_slice(), &predicates),
     }
 }
 
 #[wasm_bindgen()]
 pub struct BiscuitBuilderBind {
-    symbols_start: usize,
-    symbols: SymbolTable,
-    facts: Vec<datalog::Fact>,
-    rules: Vec<datalog::Rule>,
-    caveats: Vec<datalog::Rule>,
+    pub(crate) symbols: SymbolTable,
+    pub(crate) facts: Vec<FactBind>,
+    pub(crate) rules: Vec<RuleBind>,
+    pub(crate) caveats: Vec<RuleBind>,
 }
 
 #[wasm_bindgen()]
@@ -154,7 +148,6 @@ impl BiscuitBuilderBind {
         let symbol_strings: Vec<String> = base_symbols.into_serde().expect("Can't format symbols table");
         let symbols = SymbolTable { symbols: symbol_strings };
         Self {
-            symbols_start: symbols.symbols.len(),
             symbols,
             facts: vec![],
             rules: vec![],
@@ -166,7 +159,6 @@ impl BiscuitBuilderBind {
     pub fn new_with_default_symbols() -> Self {
         let symbols = default_symbol_table();
         Self {
-            symbols_start: symbols.symbols.len(),
             symbols,
             facts: vec![],
             rules: vec![],
@@ -176,32 +168,17 @@ impl BiscuitBuilderBind {
 
     #[wasm_bindgen(js_name = addAuthorityFact)]
     pub fn add_authority_fact(&mut self, mut fact: FactBind) {
-        /*FIXME: use the BiscuitBuilder API
-        let authority_symbol = builder::Atom::Symbol("authority".to_string());
-        if fact.0.ids.is_empty() || fact.0.ids[0] != authority_symbol {
-            fact.0.ids.insert(0, authority_symbol);
-        }*/
-
-        let f = fact.convert(&mut self.symbols);
-        self.facts.push(f);
+        self.facts.push(fact);
     }
 
     #[wasm_bindgen(js_name = addAuthorityRule)]
     pub fn add_authority_rule(&mut self, mut rule_bind: RuleBind) {
-        /*FIXME: use the BiscuitBuilder API
-        let authority_symbol = builder::Atom::Symbol("authority".to_string());
-        if rule_bind.rule.0.ids.is_empty() || rule_bind.rule.0.ids[0] != authority_symbol {
-            rule_bind.rule.0.ids.insert(0, authority_symbol);
-        }*/
-
-        let r = rule_bind.get_inner_rule().convert(&mut self.symbols);
-        self.rules.push(r);
+        self.rules.push(rule_bind);
     }
 
     #[wasm_bindgen(js_name = addAuthorityCaveat)]
     pub fn add_authority_caveat(&mut self, rule_bind: RuleBind) {
-        let r = rule_bind.get_inner_rule().convert(&mut self.symbols);
-        self.caveats.push(r);
+        self.caveats.push(rule_bind);
     }
 
     #[wasm_bindgen(js_name = addRight)]
@@ -218,19 +195,22 @@ impl BiscuitBuilderBind {
     #[wasm_bindgen]
     pub fn build(mut self, root: crate::crypto::KeyPairBind) -> Result<BiscuitBinder, JsValue> {
         let mut rng = OsRng::new().expect("os range");
-        let new_syms = self.symbols.symbols.split_off(self.symbols_start);
+        let symbols = self.symbols;
+        let mut builder = Biscuit::builder_with_symbols(&mut rng, &root.0, symbols);
 
-        self.symbols.symbols = new_syms;
+        for fact in self.facts {
+          builder.add_authority_fact(&fact.into_fact());
+        }
 
-        let authority_block = Block {
-            index: 0,
-            symbols: self.symbols,
-            facts: self.facts,
-            rules: self.rules,
-            caveats: self.caveats,
-        };
+        for rule in self.rules {
+          builder.add_authority_rule(&rule.into_rule());
+        }
 
-        Biscuit::new(&mut rng, &root.0, authority_block)
+        for caveat in self.caveats {
+          builder.add_authority_caveat(&caveat.into_rule());
+        }
+
+        builder.build()
             .map_err(|e| { let e: crate::error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).unwrap())
             .map(|biscuit| BiscuitBinder(biscuit))

@@ -16,96 +16,37 @@ use crate::builder::*;
 #[wasm_bindgen]
 pub struct SymbolTableBind(SymbolTable);
 
-#[wasm_bindgen(js_name = defaulSymbolTable)]
-pub fn default_symbol_table() -> SymbolTableBind {
-    let mut syms = SymbolTable::new();
-    syms.insert("authority");
-    syms.insert("ambient");
-    syms.insert("resource");
-    syms.insert("operation");
-    syms.insert("right");
-    syms.insert("current_time");
-    syms.insert("revocation_id");
-
-    SymbolTableBind(syms)
-}
-
-#[wasm_bindgen]
-pub struct BlockBind(Block);
-
-#[wasm_bindgen]
-impl BlockBind {
-    #[wasm_bindgen(constructor)]
-    pub fn new(index: u32, symbols: SymbolTableBind) -> BlockBind {
-        BlockBind(Block {
-            index,
-            symbols: symbols.0,
-            facts: vec![],
-            rules: vec![],
-            caveats: vec![],
-        })
-    }
-
-    #[wasm_bindgen(js_name = symbolAdd)]
-    pub fn symbol_add(&mut self, s: &str) {
-        self.0.symbols.add(s);
-    }
-
-    #[wasm_bindgen(js_name = symbolInsert)]
-    pub fn symbol_insert(&mut self, s: &str) -> u64 {
-        self.0.symbols.insert(s)
-    }
-}
-
 #[wasm_bindgen()]
-#[derive(Clone, Debug)]
-pub struct BlockBuilderBind(BlockBuilder);
+pub struct BlockBuilderBind {
+  facts: Vec<FactBind>,
+  rules: Vec<RuleBind>,
+  caveats: Vec<RuleBind>,
+}
 
 #[wasm_bindgen()]
 impl BlockBuilderBind {
     #[wasm_bindgen(constructor)]
-    pub fn new(index: u32, symbols: JsValue) -> Self {
-        let symbol_strings: Vec<String> = symbols.into_serde().expect("Can't format symbols table");
-        let symbols = SymbolTable { symbols: symbol_strings };
-        Self(BlockBuilder::new(index, symbols))
-    }
-
-    #[wasm_bindgen(js_name = newWithDefaultSymbols)]
-    pub fn new_with_default_symbols() -> Self {
-        Self(BlockBuilder::new(0, default_symbol_table().0))
+    pub fn new() -> Self {
+        BlockBuilderBind {
+          facts: vec![],
+          rules: vec![],
+          caveats: vec![],
+        }
     }
 
     #[wasm_bindgen(js_name = addFact)]
     pub fn add_fact(&mut self, fact: FactBind) {
-        let f = fact.convert(&mut self.0.symbols);
-        self.0.facts.push(f);
+        self.facts.push(fact);
     }
 
     #[wasm_bindgen(js_name = addRule)]
     pub fn add_rule(&mut self, rule: RuleBind) {
-        let r = rule.get_inner_rule().convert(&mut self.0.symbols);
-        self.0.rules.push(r);
+        self.rules.push(rule);
     }
 
     #[wasm_bindgen(js_name = addCaveat)]
     pub fn add_caveat(&mut self, caveat: RuleBind) {
-        let c = caveat.get_inner_rule().convert(&mut self.0.symbols);
-        self.0.caveats.push(c);
-    }
-
-    #[wasm_bindgen]
-    pub fn build(mut self) -> BlockBind {
-        let new_syms = self.0.symbols.symbols.split_off(self.0.symbols_start);
-
-        self.0.symbols.symbols = new_syms;
-
-        BlockBind(Block {
-            index: self.0.index,
-            symbols: self.0.symbols,
-            facts: self.0.facts,
-            rules: self.0.rules,
-            caveats: self.0.caveats,
-        })
+        self.caveats.push(caveat);
     }
 }
 
@@ -115,16 +56,28 @@ pub struct BiscuitBinder(Biscuit);
 
 #[wasm_bindgen]
 impl BiscuitBinder {
+    /*#[wasm_bindgen(constructor)]
+    pub fn new(base_symbols: JsValue) -> BiscuitBuilderBind {
+        let symbol_strings: Option<Vec<String>> = base_symbols.into_serde().expect("Can't format symbols table");
+        let symbols = symbol_strings.map(|symbols| SymbolTable { symbols }).unwrap_or_else(default_symbol_table);
+
+        BiscuitBuilderBind {
+            symbols,
+            facts: vec![],
+            rules: vec![],
+            caveats: vec![],
+        }
+    }*/
     #[wasm_bindgen(constructor)]
-    pub fn  new(root: &crypto::KeyPairBind, block: BlockBind) -> Result<BiscuitBinder, JsValue> {
-        let mut rng = OsRng::new().expect("can't create OS rng");
+    pub fn new() -> BiscuitBuilderBind {
 
-        Biscuit::new(&mut rng, &root.0, block.0)
-            .map_err(|e| { let e: error::Error = e.into(); e})
-            .map_err(|e| JsValue::from_serde(&e).expect("error serde"))
-            .map(|biscuit| BiscuitBinder(biscuit))
+        BiscuitBuilderBind {
+            symbols: default_symbol_table(),
+            facts: vec![],
+            rules: vec![],
+            caveats: vec![],
+        }
     }
-
 
     fn from_biscuit(biscuit: &Biscuit) -> Self {
         BiscuitBinder(biscuit.clone())
@@ -158,17 +111,33 @@ impl BiscuitBinder {
 
     #[wasm_bindgen(js_name = createBlock)]
     pub fn create_block(&self) -> BlockBuilderBind {
-        BlockBuilderBind(self.0.create_block())
+        BlockBuilderBind::new()
     }
 
     #[wasm_bindgen]
     pub fn append(
         &self,
         keypair: crypto::KeyPairBind,
-        block: BlockBind,
+        block_builder: BlockBuilderBind,
     ) -> Result<BiscuitBinder, JsValue> {
+        let mut builder = self.0.create_block();
+
+        for fact in block_builder.facts {
+          builder.add_fact(&fact.into_fact());
+        }
+
+        for rule in block_builder.rules {
+          builder.add_rule(&rule.into_rule());
+        }
+
+        for caveat in block_builder.caveats {
+          builder.add_caveat(&caveat.into_rule());
+        }
+
+        let block = builder.build();
+
         let mut rng = OsRng::new().expect("can't create OS rng");
-        self.0.append(&mut rng, &keypair.0, block.0)
+        self.0.append(&mut rng, &keypair.0, block)
             .map_err(|e| { let e: error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).expect("error append"))
             .map(|biscuit| BiscuitBinder(biscuit))

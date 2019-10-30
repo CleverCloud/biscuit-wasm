@@ -35,17 +35,17 @@ impl Verifier {
 
     #[wasm_bindgen(js_name = addRule)]
     pub fn add_rule(&mut self, rule_bind: RuleBind) {
-        self.rules.push(rule_bind.get_inner_rule());
+        self.rules.push(rule_bind.into_rule());
     }
 
     #[wasm_bindgen(js_name = addBlockCaveat)]
     pub fn add_block_caveat(&mut self, caveat: RuleBind) {
-        self.block_caveats.push(caveat.get_inner_rule());
+        self.block_caveats.push(caveat.into_rule());
     }
 
     #[wasm_bindgen(js_name = addAuthorityCaveat)]
     pub fn add_authority_caveat(&mut self, caveat: RuleBind) {
-        self.block_caveats.push(caveat.get_inner_rule());
+        self.block_caveats.push(caveat.into_rule());
     }
 
     #[wasm_bindgen(js_name = addResource)]

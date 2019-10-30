@@ -5,7 +5,7 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
     let keypair = wasm.newKeypair()
     let public_key = wasm.publicKey(keypair)
 
-    let builder = wasm.BiscuitBuilderBind.newWithDefaultSymbols()
+    let builder = new wasm.BiscuitBinder()
     let fact = wasm.fact("right", [
         wasm.symbol("authority"),
         wasm.string("file1"),
@@ -30,8 +30,7 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
     let biscuit = builder.build(keypair)
 
     let keypair2 = wasm.newKeypair()
-    let blockbuilder = biscuit.createBlock()
-    let block = blockbuilder.build()
+    let block = biscuit.createBlock()
 
     let biscuit2 = biscuit.append(keypair2, block)
 
@@ -54,15 +53,17 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
 
 exports.create_block_with_authority_fact_and_verify = () => {
     let keypair = wasm.newKeypair()
+    let builder = wasm.BiscuitBuilderBind.newWithDefaultSymbols()
+    //let builder = new wasm.BiscuitBinder(["abc"])
 
-    let authorityBlock = wasm.BlockBuilderBind.newWithDefaultSymbols();
-    authorityBlock.addFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file1"), wasm.symbol("read") ] ))
-    authorityBlock.addFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file2"), wasm.symbol("read") ] ))
-    authorityBlock.addFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file1"), wasm.symbol("write") ] ))
+    builder.addAuthorityFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file1"), wasm.symbol("read") ] ))
+    builder.addAuthorityFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file2"), wasm.symbol("read") ] ))
+    builder.addAuthorityFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file1"), wasm.symbol("write") ] ))
 
-    let biscuit1 = new wasm.BiscuitBinder(keypair, authorityBlock.build())
+    let biscuit1 = builder.build(keypair)
 
-    let blockBuilder = biscuit1.createBlock()
+
+    let block2 = biscuit1.createBlock()
 
     let rules = wasm.rule(
         "caveat1",
@@ -83,8 +84,7 @@ exports.create_block_with_authority_fact_and_verify = () => {
         ]
     )
 
-    blockBuilder.addCaveat(rules)
-    let block2 = blockBuilder.build()
+    block2.addCaveat(rules)
 
     let keypair2 = wasm.newKeypair()
     let biscuit2 = biscuit1.append(keypair2, block2)
