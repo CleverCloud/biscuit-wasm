@@ -5,13 +5,13 @@ use biscuit::crypto::KeyPair;
 use biscuit::datalog::{self, SymbolTable};
 use wasm_bindgen::prelude::*;
 use rand::rngs::OsRng;
-use serde::{Deserialize};
+use serde::{Serialize, Deserialize};
 use std::default::Default;
 
 use super::BiscuitBinder;
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct AtomBind {
   integer: Option<i64>,
   string: Option<String>,
@@ -35,38 +35,38 @@ impl AtomBind {
     } else if let Some(i) = variable {
       builder::variable(i)
     } else {
-      panic!()
+      panic!("invalid atom: {:?}", AtomBind { integer, string, symbol, date, variable });
     }
   }
 }
 
-#[wasm_bindgen(js_name = int)]
-pub fn integer(i: i64) -> AtomBind {
-  AtomBind { integer: Some(i), ..Default::default() }
+#[wasm_bindgen]
+pub fn integer(i: i64) -> JsValue {
+  JsValue::from_serde(&AtomBind { integer: Some(i), ..Default::default() }).unwrap()
 }
 
-#[wasm_bindgen(js_name = string)]
-pub fn string(s: &str) -> AtomBind {
-  AtomBind { string: Some(s.to_string()), ..Default::default() }
+#[wasm_bindgen]
+pub fn string(s: &str) -> JsValue {
+  JsValue::from_serde(&AtomBind { string: Some(s.to_string()), ..Default::default() }).unwrap()
 }
 
-#[wasm_bindgen(js_name = symbol)]
-pub fn symbol(s: &str) -> AtomBind {
-  AtomBind { symbol: Some(s.to_string()), ..Default::default() }
+#[wasm_bindgen]
+pub fn symbol(s: &str) -> JsValue {
+  JsValue::from_serde(&AtomBind { symbol: Some(s.to_string()), ..Default::default() }).unwrap()
 }
 
-#[wasm_bindgen(js_name = date)]
-pub fn date(i: u64) -> AtomBind {
-  AtomBind { date: Some(i), ..Default::default() }
+#[wasm_bindgen]
+pub fn date(i: u64) -> JsValue {
+  JsValue::from_serde(&AtomBind { date: Some(i), ..Default::default() }).unwrap()
 }
 
-#[wasm_bindgen(js_name = variable)]
-pub fn variable(i: u32) -> AtomBind {
-  AtomBind { variable: Some(i), ..Default::default() }
+#[wasm_bindgen]
+pub fn variable(i: u32) -> JsValue {
+  JsValue::from_serde(&AtomBind { variable: Some(i), ..Default::default() }).unwrap()
 }
 
 //#[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct PredicateBind {
   pub name: String,
   pub ids: Vec<AtomBind>,
@@ -208,7 +208,10 @@ impl BiscuitBuilderBind {
     pub fn add_right(&mut self, resource: &str, right: &str) {
         self.add_authority_fact(FactBind(PredicateBind{
             name: "right".to_string(),
-            ids: vec![string("authority"), string(resource), symbol(right)],
+            ids: vec![
+              AtomBind { string: Some("authority".to_string()), ..Default::default()},
+              AtomBind { string: Some(resource.to_string()), ..Default::default()},
+              AtomBind { symbol: Some(right.to_string()), ..Default::default() }],
         }));
     }
 

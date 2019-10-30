@@ -3,26 +3,27 @@ const assert = require("assert")
 
 exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = () => {
     let keypair = wasm.newKeypair()
+    let public_key = wasm.publicKey(keypair)
 
     let builder = wasm.BiscuitBuilderBind.newWithDefaultSymbols()
     let fact = wasm.fact("right", [
-        { Symbol: "authority" },
-        { Str: "file1" },
-        { Symbol: "read" }
+        wasm.symbol("authority"),
+        wasm.string("file1"),
+        wasm.symbol("read")
     ])
     builder.addAuthorityFact(fact)
 
     fact = wasm.fact("right", [
-        { Symbol: "authority" },
-        { Str: "file2" },
-        { Symbol: "read" }
+        { symbol: "authority" },
+        { string: "file2" },
+        { symbol: "read" }
     ])
     builder.addAuthorityFact(fact)
 
     fact = wasm.fact("right", [
-        { Symbol: "authority" },
-        { Str: "file1" },
-        { Symbol: "write" }
+        { symbol: "authority" },
+        { string: "file1" },
+        { symbol: "write" }
     ])
     builder.addAuthorityFact(fact)
 
@@ -37,26 +38,27 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
     let verifier = new wasm.Verifier()
     let rule = wasm.rule(
         "right",
-        [{ Symbol: "right" }],
+        [{ symbol: "right" }],
         [
         {
             name: "right",
-            ids: [{ Symbol: "authority" }, { Str: "file2" }, { Symbol: "write" }]
+            ids: [{ symbol: "authority" }, { string: "file2" }, { symbol: "write" }]
         }
         ]
     )
 
     verifier.addAuthorityCaveat(rule)
-    verifier.verify(biscuit2)
+
+    verifier.verify(public_key, biscuit2)
 };
 
 exports.create_block_with_authority_fact_and_verify = () => {
     let keypair = wasm.newKeypair()
 
     let authorityBlock = wasm.BlockBuilderBind.newWithDefaultSymbols();
-    authorityBlock.addFact(wasm.fact("right", [ { Symbol: "authority" }, { Str: "file1" }, { Str: "read" } ] ))
-    authorityBlock.addFact(wasm.fact("right", [ { Symbol: "authority" }, { Str: "file2" }, { Str: "read" } ] ))
-    authorityBlock.addFact(wasm.fact("right", [ { Symbol: "authority" }, { Str: "file1" }, { Str: "write" } ] ))
+    authorityBlock.addFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file1"), wasm.symbol("read") ] ))
+    authorityBlock.addFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file2"), wasm.symbol("read") ] ))
+    authorityBlock.addFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file1"), wasm.symbol("write") ] ))
 
     let biscuit1 = new wasm.BiscuitBinder(keypair, authorityBlock.build())
 
@@ -64,19 +66,19 @@ exports.create_block_with_authority_fact_and_verify = () => {
 
     let rules = wasm.rule(
         "caveat1",
-        [{ Variable: 0 }],
+        [{ variable: 0 }],
         [
             {
                 name: "resource",
-                ids: [{ Symbol: "ambient" }, { Variable: 0 }]
+                ids: [{ symbol: "ambient" }, { variable: 0 }]
             },
             {
                 name: "operation",
-                ids: [{ Symbol: "ambient" }, { Symbol: "read" }]
+                ids: [{ symbol: "ambient" }, { symbol: "read" }]
             },
             {
                 name: "right",
-                ids: [{ Symbol: "authority" }, { Variable: 0 }, { Symbol: "read" }]
+                ids: [{ symbol: "authority" }, { variable: 0 }, { symbol: "read" }]
             }
         ]
     )
