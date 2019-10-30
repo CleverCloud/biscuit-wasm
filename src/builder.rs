@@ -230,7 +230,9 @@ impl BiscuitBuilderBind {
             caveats: self.caveats,
         };
 
-        Biscuit::new(&mut rng, &root.0, authority_block).map_err(|e| JsValue::from_serde(&e).unwrap())
+        Biscuit::new(&mut rng, &root.0, authority_block)
+            .map_err(|e| { let e: crate::error::Error = e.into(); e})
+            .map_err(|e| JsValue::from_serde(&e).unwrap())
             .map(|biscuit| BiscuitBinder(biscuit))
     }
 }

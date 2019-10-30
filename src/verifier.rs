@@ -87,7 +87,9 @@ impl Verifier {
 
     #[wasm_bindgen]
     pub fn verify(&self, root_key: &crate::crypto::PublicKeyBind, biscuit: BiscuitBinder) -> Result<(), JsValue> {
-        let mut verifier = biscuit.0.verify(root_key.0).map_err(|e| JsValue::from_serde(&e).expect("error serde"))?;
+        let mut verifier = biscuit.0.verify(root_key.0)
+            .map_err(|e| { let e: crate::error::Error = e.into(); e})
+            .map_err(|e| JsValue::from_serde(&e).expect("error serde"))?;
 
         for fact in self.facts.iter() {
             verifier.add_fact(fact.clone());
@@ -105,6 +107,6 @@ impl Verifier {
             verifier.add_block_caveat(caveat.clone());
         }
 
-        verifier.verify().map_err(|e| JsValue::from_serde(&e).expect("error serde"))
+        verifier.verify().map_err(|e| crate::error::Error::FailedLogic(e.into())).map_err(|e| JsValue::from_serde(&e).expect("error serde"))
     }
 }
