@@ -1,4 +1,4 @@
-use crate::builder::*;
+use crate::builder::{FactBind, RuleBind};
 use crate::BiscuitBinder;
 
 use biscuit::token::builder::*;
@@ -30,7 +30,7 @@ impl Verifier {
 
     #[wasm_bindgen(js_name = addFact)]
     pub fn add_fact(&mut self, fact: FactBind) {
-        self.facts.push(fact.into());
+        self.facts.push(Fact(fact.0.into_predicate()));
     }
 
     #[wasm_bindgen(js_name = addRule)]
@@ -69,6 +69,7 @@ impl Verifier {
             .push(fact("time", &[s("ambient"), date(&SystemTime::now())]));
     }
 
+    /*FIXME: constraints
     #[wasm_bindgen(js_name = revocationCheck)]
     pub fn revocation_check(&mut self, ids: &[i64]) {
         let caveat = constrained_rule(
@@ -82,10 +83,11 @@ impl Verifier {
         );
         self.add_block_caveat(RuleBind::from(caveat));
     }
+    */
 
     #[wasm_bindgen]
     pub fn verify(&self, root_key: &crate::crypto::PublicKeyBind, biscuit: BiscuitBinder) -> Result<(), JsValue> {
-        let mut verifier = &biscuit.0.verify(root_key.0).map_err(|e| JsValue::from_serde(&e).expect("error serde"))?;
+        let mut verifier = biscuit.0.verify(root_key.0).map_err(|e| JsValue::from_serde(&e).expect("error serde"))?;
 
         for fact in self.facts.iter() {
             verifier.add_fact(fact.clone());

@@ -1,4 +1,4 @@
-use biscuit::token::builder::*;
+use biscuit::token::builder;
 use biscuit::token::{Biscuit, Block};
 use biscuit::token::default_symbol_table;
 use biscuit::crypto::KeyPair;
@@ -6,53 +6,118 @@ use biscuit::datalog::{self, SymbolTable};
 use wasm_bindgen::prelude::*;
 use rand::rngs::OsRng;
 use serde::{Deserialize};
+use std::default::Default;
 
 use super::BiscuitBinder;
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Hash, Eq)]
+#[derive(Debug, Clone, PartialEq, Default, Deserialize)]
 pub struct AtomBind {
-    atom: Atom,
+  integer: Option<i64>,
+  string: Option<String>,
+  symbol: Option<String>,
+  date: Option<u64>,
+  variable: Option<u32>,
+}
+
+impl AtomBind {
+  pub fn into_atom(self) -> builder::Atom {
+    let AtomBind { integer, string, symbol, date, variable } = self;
+
+    if let Some(i) = integer {
+      builder::int(i)
+    } else if let Some(s) = string {
+      builder::string(&s)
+    } else if let Some(s) = symbol {
+      builder::symbol(&s)
+    } else if let Some(i) = date {
+      builder::Atom::Date(i)
+    } else if let Some(i) = variable {
+      builder::variable(i)
+    } else {
+      panic!()
+    }
+  }
+}
+
+#[wasm_bindgen(js_name = int)]
+pub fn integer(i: i64) -> AtomBind {
+  AtomBind { integer: Some(i), ..Default::default() }
+}
+
+#[wasm_bindgen(js_name = string)]
+pub fn string(s: &str) -> AtomBind {
+  AtomBind { string: Some(s.to_string()), ..Default::default() }
+}
+
+#[wasm_bindgen(js_name = symbol)]
+pub fn symbol(s: &str) -> AtomBind {
+  AtomBind { symbol: Some(s.to_string()), ..Default::default() }
+}
+
+#[wasm_bindgen(js_name = date)]
+pub fn date(i: u64) -> AtomBind {
+  AtomBind { date: Some(i), ..Default::default() }
+}
+
+#[wasm_bindgen(js_name = variable)]
+pub fn variable(i: u32) -> AtomBind {
+  AtomBind { variable: Some(i), ..Default::default() }
+}
+
+//#[wasm_bindgen]
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+pub struct PredicateBind {
+  pub name: String,
+  pub ids: Vec<AtomBind>,
+}
+
+impl PredicateBind {
+  pub fn into_predicate(mut self) -> builder::Predicate {
+    builder::Predicate {
+      name: self.name,
+      ids: self.ids.drain(..).map(|a| a.into_atom()).collect(),
+    }
+  }
 }
 
 #[wasm_bindgen]
-pub struct FactBind(Predicate);
+pub struct FactBind(pub(crate) PredicateBind);
 
 impl FactBind {
     pub fn convert(&self, symbols: &mut SymbolTable) -> datalog::Fact {
         datalog::Fact {
-            predicate: self.0.convert(symbols),
+            predicate: self.0.clone().into_predicate().convert(symbols),
         }
     }
-}
 
-impl Into<Fact> for FactBind {
-    fn into(self) -> Fact {
-        Fact::from(self.0)
+    pub fn into_fact(self) -> builder::Fact {
+      builder::Fact(self.0.into_predicate())
     }
 }
 
 #[wasm_bindgen(js_name = fact)]
 pub fn fact_bind(name: &str, ids: JsValue) -> FactBind {
-    let ids: Vec<Atom> = ids.into_serde().expect("incorrect atom vec");
-    FactBind(pred(name, &ids))
+    let ids: Vec<AtomBind> = ids.into_serde().expect("incorrect atom vec");
+    FactBind(PredicateBind { name: name.to_string(), ids})
 }
 
-#[wasm_bindgen]
+#[wasm_bindgen()]
 #[derive(Debug, Clone, PartialEq, Deserialize)]
 pub struct RuleBind{
-    rule: Rule
+    //rule: builder::Rule
+    head_name: String,
+    head_ids: Vec<AtomBind>,
+    predicates: Vec<PredicateBind>,
+    // FIXME: constraints
 }
 
 impl RuleBind {
-    pub fn get_inner_rule(self) -> Rule {
-        self.rule
-    }
-}
-
-impl From<Rule> for RuleBind {
-    fn from(rule: Rule) -> Self {
-        Self{ rule }
+    pub fn get_inner_rule(mut self) -> builder::Rule {
+        //self.rule
+        let head_ids = self.head_ids.drain(..).map(|a| a.into_atom()).collect::<Vec<_>>();
+        let predicates = self.predicates.drain(..).map(|p| p.into_predicate()).collect::<Vec<_>>();
+        builder::rule(&self.head_name, &head_ids, &predicates)
     }
 }
 
@@ -62,10 +127,14 @@ pub fn rule_bind(
     head_ids: JsValue,
     predicates: JsValue,
 ) -> RuleBind {
-    let head_ids: Vec<Atom> = head_ids.into_serde().unwrap();
-    let predicates: Vec<Predicate> = predicates.into_serde().unwrap();
+    let head_ids: Vec<AtomBind> = head_ids.into_serde().expect("incorrect atom vec");
+    //let head_ids: Vec<builder::Atom> = head_ids.drain(..).map(|a| a.into_atom()).collect();
+    let predicates: Vec<PredicateBind> = predicates.into_serde().unwrap();
     RuleBind {
-        rule: rule(head_name, head_ids.as_slice(), &predicates),
+        head_name: head_name.to_string(),
+        head_ids,
+        predicates,
+        //rule: builder::rule(head_name, head_ids.as_slice(), &predicates),
     }
 }
 
@@ -107,10 +176,11 @@ impl BiscuitBuilderBind {
 
     #[wasm_bindgen(js_name = addAuthorityFact)]
     pub fn add_authority_fact(&mut self, mut fact: FactBind) {
-        let authority_symbol = Atom::Symbol("authority".to_string());
+        /*FIXME: use the BiscuitBuilder API
+        let authority_symbol = builder::Atom::Symbol("authority".to_string());
         if fact.0.ids.is_empty() || fact.0.ids[0] != authority_symbol {
             fact.0.ids.insert(0, authority_symbol);
-        }
+        }*/
 
         let f = fact.convert(&mut self.symbols);
         self.facts.push(f);
@@ -118,26 +188,27 @@ impl BiscuitBuilderBind {
 
     #[wasm_bindgen(js_name = addAuthorityRule)]
     pub fn add_authority_rule(&mut self, mut rule_bind: RuleBind) {
-        let authority_symbol = Atom::Symbol("authority".to_string());
+        /*FIXME: use the BiscuitBuilder API
+        let authority_symbol = builder::Atom::Symbol("authority".to_string());
         if rule_bind.rule.0.ids.is_empty() || rule_bind.rule.0.ids[0] != authority_symbol {
             rule_bind.rule.0.ids.insert(0, authority_symbol);
-        }
+        }*/
 
-        let r = rule_bind.rule.convert(&mut self.symbols);
+        let r = rule_bind.get_inner_rule().convert(&mut self.symbols);
         self.rules.push(r);
     }
 
     #[wasm_bindgen(js_name = addAuthorityCaveat)]
     pub fn add_authority_caveat(&mut self, rule_bind: RuleBind) {
-        let r = rule_bind.rule.convert(&mut self.symbols);
+        let r = rule_bind.get_inner_rule().convert(&mut self.symbols);
         self.caveats.push(r);
     }
 
     #[wasm_bindgen(js_name = addRight)]
     pub fn add_right(&mut self, resource: &str, right: &str) {
-        self.add_authority_fact(FactBind(Predicate{
+        self.add_authority_fact(FactBind(PredicateBind{
             name: "right".to_string(),
-            ids: vec![s("authority"), string(resource), s(right)],
+            ids: vec![string("authority"), string(resource), symbol(right)],
         }));
     }
 
