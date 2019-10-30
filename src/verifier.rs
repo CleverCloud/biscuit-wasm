@@ -45,7 +45,7 @@ impl Verifier {
 
     #[wasm_bindgen(js_name = addAuthorityCaveat)]
     pub fn add_authority_caveat(&mut self, caveat: RuleBind) {
-        self.block_caveats.push(caveat.into_rule());
+        self.authority_caveats.push(caveat.into_rule());
     }
 
     #[wasm_bindgen(js_name = addResource)]
