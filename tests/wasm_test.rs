@@ -1,9 +1,7 @@
 use wasm_bindgen::prelude::*;
 use wasm_bindgen_test::*;
 
-use biscuit::error;
-use biscuit::error::FailedCaveat::*;
-
+use biscuit_wasm::error::FailedCaveat::Verifier;
 use biscuit_wasm::*;
 
 #[wasm_bindgen(module = "tests/wasm_test.js")]
@@ -26,18 +24,17 @@ fn wasm_create_biscuit_with_authority_fact_only_and_verify_should_fail_on_caveat
             panic!("{:#?}", e)
         } else {
             assert_eq!(
-                error::Logic::FailedCaveats(
-                    vec![
-                        Verifier(error::FailedVerifierCaveat{
-                            block_id: 0,
-                            caveat_id: 0,
-                            rule: "right(#right) <- right(#authority, \"file2\", #write) | ".to_string() })
-                    ]
-                ),
+                error::Error::FailedLogic(error::Logic::FailedCaveats(vec![Verifier(
+                    error::FailedVerifierCaveat {
+                        block_id: 0,
+                        caveat_id: 0,
+                        rule: "right(#right) <- right(#authority, \"file2\", #write) | "
+                            .to_string()
+                    }
+                )])),
                 res.unwrap()
             );
         }
-
     } else {
         panic!("Should return a failed caveats error");
     }
