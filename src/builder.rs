@@ -1,5 +1,5 @@
 use biscuit::token::builder;
-use biscuit::token::Biscuit;
+use biscuit::token;
 use biscuit::token::default_symbol_table;
 use biscuit::datalog::{self, SymbolTable};
 use wasm_bindgen::prelude::*;
@@ -7,7 +7,7 @@ use rand::rngs::OsRng;
 use serde::{Serialize, Deserialize};
 use std::default::Default;
 
-use super::BiscuitBinder;
+use super::Biscuit;
 
 #[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
@@ -192,10 +192,10 @@ impl BiscuitBuilderBind {
     }
 
     #[wasm_bindgen]
-    pub fn build(self, root: crate::crypto::KeyPairBind) -> Result<BiscuitBinder, JsValue> {
+    pub fn build(self, root: crate::crypto::KeyPair) -> Result<Biscuit, JsValue> {
         let mut rng = OsRng::new().expect("os range");
         let symbols = self.symbols;
-        let mut builder = Biscuit::builder_with_symbols(&mut rng, &root.0, symbols);
+        let mut builder = token::Biscuit::builder_with_symbols(&mut rng, &root.0, symbols);
 
         for fact in self.facts {
           builder.add_authority_fact(&fact.into_fact());
@@ -212,7 +212,7 @@ impl BiscuitBuilderBind {
         builder.build()
             .map_err(|e| { let e: crate::error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).unwrap())
-            .map(BiscuitBinder)
+            .map(Biscuit)
     }
 }
 

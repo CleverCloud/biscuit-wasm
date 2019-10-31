@@ -1,5 +1,5 @@
 use crate::builder::{FactBind, RuleBind};
-use crate::BiscuitBinder;
+use crate::Biscuit;
 
 use biscuit::token::builder::*;
 use biscuit::datalog::{Constraint, ConstraintKind, IntConstraint};
@@ -86,7 +86,7 @@ impl Verifier {
     */
 
     #[wasm_bindgen]
-    pub fn verify(&self, root_key: &crate::crypto::PublicKeyBind, biscuit: BiscuitBinder) -> Result<(), JsValue> {
+    pub fn verify(&self, root_key: &crate::crypto::PublicKey, biscuit: Biscuit) -> Result<(), JsValue> {
         let mut verifier = biscuit.0.verify(root_key.0)
             .map_err(|e| { let e: crate::error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).expect("error serde"))?;
