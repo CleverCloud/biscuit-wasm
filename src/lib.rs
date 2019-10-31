@@ -137,4 +137,9 @@ impl Biscuit {
             .map_err(|e| JsValue::from_serde(&e).expect("error append"))
             .map(Biscuit)
     }
+
+    #[wasm_bindgen]
+    pub fn print(&self) -> String {
+      self.0.print()
+    }
 }
