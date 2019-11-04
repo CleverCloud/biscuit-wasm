@@ -1,8 +1,7 @@
-use crate::builder::{FactBind, RuleBind};
+use crate::builder::{FactBind, RuleBind, PredicateBind, AtomBind, Constraint, ConstraintKind, ConstraintData};
 use crate::Biscuit;
 
-use biscuit::token::builder::*;
-use biscuit::datalog::{Constraint, ConstraintKind, IntConstraint};
+use biscuit::token::builder::{self, s, string, date, fact, Fact, Rule};
 
 use std::time::SystemTime;
 
@@ -69,21 +68,21 @@ impl Verifier {
             .push(fact("time", &[s("ambient"), date(&SystemTime::now())]));
     }
 
-    /*FIXME: constraints
     #[wasm_bindgen(js_name = revocationCheck)]
     pub fn revocation_check(&mut self, ids: &[i64]) {
-        let caveat = constrained_rule(
-            "revocation_check",
-            &[Atom::Variable(0)],
-            &[pred("revocation_id", &[Atom::Variable(0)])],
-            &[Constraint {
-                id: 0,
-                kind: ConstraintKind::Int(IntConstraint::NotIn(ids.iter().cloned().collect())),
-            }],
-        );
-        self.add_block_caveat(RuleBind::from(caveat));
+        let caveat = RuleBind {
+          head_name: "revocation_check".to_string(),
+          head_ids: vec![AtomBind { variable: Some(0), ..Default::default() }],
+          predicates: vec![PredicateBind { name: "revocation_id".to_string(), ids: vec![AtomBind { variable: Some(0), ..Default::default() }] }],
+          constraints: vec![Constraint {
+            id: 0,
+            kind: ConstraintKind::Integer,
+            operation: "in".to_string(),
+            data: ConstraintData::IntegerSet(ids.iter().cloned().collect()),
+          }],
+        };
+        self.add_block_caveat(caveat);
     }
-    */
 
     #[wasm_bindgen]
     pub fn verify(&self, root_key: &crate::crypto::PublicKey, biscuit: Biscuit) -> Result<(), JsValue> {

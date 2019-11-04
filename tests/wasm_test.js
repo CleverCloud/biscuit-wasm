@@ -28,11 +28,13 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
     builder.addAuthorityFact(fact)
 
     let biscuit = builder.build(keypair)
+    console.log(biscuit.print())
 
     let keypair2 = new wasm.KeyPair()
     let block = biscuit.createBlock()
 
     let biscuit2 = biscuit.append(keypair2, block)
+    console.log(biscuit2.print())
 
     let verifier = new wasm.Verifier()
     let rule = wasm.rule(
@@ -90,4 +92,30 @@ exports.create_block_with_authority_fact_and_verify = () => {
     let keypair2 = new wasm.KeyPair()
     let biscuit2 = biscuit1.append(keypair2, block2)
     assert.ok(biscuit2 !== null && biscuit2 !== undefined)
+
+    /*
+    let f = wasm.constraint_test()
+    console.log(f)
+    console.table(f)
+    */
+
+    // test creating a rule with constraints
+    let rule = wasm.constrained_rule(
+      // name
+      "revocation_check",
+      // head ids
+      [{ variable: 0 }],
+      // predicates
+      [{ name: "revocation_id", ids: [{ variable: 0 }] }],
+      // constraints
+      [{ id: 0, kind: "integer", operation: "in", data: [ 2, 1 ] }])
+
+    let block3 = biscuit2.createBlock()
+    console.table(block3)
+    block3.addCaveat(rule)
+    let keypair3 = new wasm.KeyPair()
+    let biscuit3 = biscuit2.append(keypair3, block3)
+
+    console.log(rule)
+    console.log(biscuit3.print())
 };
