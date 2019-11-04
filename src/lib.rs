@@ -1,4 +1,4 @@
-use biscuit::datalog::SymbolTable;
+use biscuit::datalog;
 use biscuit::token;
 use biscuit;
 use wasm_bindgen::prelude::*;
@@ -12,20 +12,20 @@ pub mod error;
 use crate::builder::*;
 
 #[wasm_bindgen]
-pub struct SymbolTableBind(SymbolTable);
+pub struct SymbolTable(datalog::SymbolTable);
 
 #[wasm_bindgen()]
-pub struct BlockBuilderBind {
-  facts: Vec<FactBind>,
-  rules: Vec<RuleBind>,
-  caveats: Vec<RuleBind>,
+pub struct BlockBuilder {
+  facts: Vec<Fact>,
+  rules: Vec<Rule>,
+  caveats: Vec<Rule>,
 }
 
 #[wasm_bindgen()]
-impl BlockBuilderBind {
+impl BlockBuilder {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
-        BlockBuilderBind {
+        BlockBuilder {
           facts: vec![],
           rules: vec![],
           caveats: vec![],
@@ -33,17 +33,17 @@ impl BlockBuilderBind {
     }
 
     #[wasm_bindgen(js_name = addFact)]
-    pub fn add_fact(&mut self, fact: FactBind) {
+    pub fn add_fact(&mut self, fact: Fact) {
         self.facts.push(fact);
     }
 
     #[wasm_bindgen(js_name = addRule)]
-    pub fn add_rule(&mut self, rule: RuleBind) {
+    pub fn add_rule(&mut self, rule: Rule) {
         self.rules.push(rule);
     }
 
     #[wasm_bindgen(js_name = addCaveat)]
-    pub fn add_caveat(&mut self, caveat: RuleBind) {
+    pub fn add_caveat(&mut self, caveat: Rule) {
         self.caveats.push(caveat);
     }
 }
@@ -55,11 +55,11 @@ pub struct Biscuit(token::Biscuit);
 #[wasm_bindgen]
 impl Biscuit {
     /*#[wasm_bindgen(constructor)]
-    pub fn new(base_symbols: JsValue) -> BiscuitBuilderBind {
+    pub fn new(base_symbols: JsValue) -> BiscuitBuilder {
         let symbol_strings: Option<Vec<String>> = base_symbols.into_serde().expect("Can't format symbols table");
         let symbols = symbol_strings.map(|symbols| SymbolTable { symbols }).unwrap_or_else(default_symbol_table);
 
-        BiscuitBuilderBind {
+        BiscuitBuilder {
             symbols,
             facts: vec![],
             rules: vec![],
@@ -68,9 +68,9 @@ impl Biscuit {
     }*/
 
     #[wasm_bindgen(constructor)]
-    pub fn new() -> BiscuitBuilderBind {
+    pub fn new() -> BiscuitBuilder {
 
-        BiscuitBuilderBind {
+        BiscuitBuilder {
             symbols: token::default_symbol_table(),
             facts: vec![],
             rules: vec![],
@@ -105,15 +105,15 @@ impl Biscuit {
     }
 
     #[wasm_bindgen(js_name = createBlock)]
-    pub fn create_block(&self) -> BlockBuilderBind {
-        BlockBuilderBind::new()
+    pub fn create_block(&self) -> BlockBuilder {
+        BlockBuilder::new()
     }
 
     #[wasm_bindgen]
     pub fn append(
         &self,
         keypair: crypto::KeyPair,
-        block_builder: BlockBuilderBind,
+        block_builder: BlockBuilder,
     ) -> Result<Biscuit, JsValue> {
         let mut builder = self.0.create_block();
 

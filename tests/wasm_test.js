@@ -55,8 +55,8 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
 
 exports.create_block_with_authority_fact_and_verify = () => {
     let keypair = new wasm.KeyPair()
-    //let builder = wasm.BiscuitBuilderBind.newWithDefaultSymbols()
-    //let builder = new wasm.BiscuitBinder(["abc"])
+    //let builder = wasm.BiscuitBuilder.newWithDefaultSymbols()
+    //let builder = new wasm.Biscuit(["abc"])
     let builder = new wasm.Biscuit()
 
     builder.addAuthorityFact(wasm.fact("right", [ wasm.symbol("authority"), wasm.string("file1"), wasm.symbol("read") ] ))

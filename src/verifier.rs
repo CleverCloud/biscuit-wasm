@@ -1,7 +1,7 @@
-use crate::builder::{FactBind, RuleBind, PredicateBind, AtomBind, Constraint, ConstraintKind, ConstraintData};
+use crate::builder::{Fact, Rule, Predicate, Atom, Constraint, ConstraintKind, ConstraintData};
 use crate::Biscuit;
 
-use biscuit::token::builder::{self, s, string, date, fact, Fact, Rule};
+use biscuit::token::builder;
 
 use std::time::SystemTime;
 
@@ -9,10 +9,10 @@ use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
 pub struct Verifier {
-    facts: Vec<Fact>,
-    rules: Vec<Rule>,
-    block_caveats: Vec<Rule>,
-    authority_caveats: Vec<Rule>,
+    facts: Vec<builder::Fact>,
+    rules: Vec<builder::Rule>,
+    block_caveats: Vec<builder::Rule>,
+    authority_caveats: Vec<builder::Rule>,
 }
 
 #[wasm_bindgen]
@@ -28,36 +28,36 @@ impl Verifier {
     }
 
     #[wasm_bindgen(js_name = addFact)]
-    pub fn add_fact(&mut self, fact: FactBind) {
-        self.facts.push(Fact(fact.0.into_predicate()));
+    pub fn add_fact(&mut self, fact: Fact) {
+        self.facts.push(builder::Fact(fact.0.into_predicate()));
     }
 
     #[wasm_bindgen(js_name = addRule)]
-    pub fn add_rule(&mut self, rule_bind: RuleBind) {
+    pub fn add_rule(&mut self, rule_bind: Rule) {
         self.rules.push(rule_bind.into_rule());
     }
 
     #[wasm_bindgen(js_name = addBlockCaveat)]
-    pub fn add_block_caveat(&mut self, caveat: RuleBind) {
+    pub fn add_block_caveat(&mut self, caveat: Rule) {
         self.block_caveats.push(caveat.into_rule());
     }
 
     #[wasm_bindgen(js_name = addAuthorityCaveat)]
-    pub fn add_authority_caveat(&mut self, caveat: RuleBind) {
+    pub fn add_authority_caveat(&mut self, caveat: Rule) {
         self.authority_caveats.push(caveat.into_rule());
     }
 
     #[wasm_bindgen(js_name = addResource)]
     pub fn add_resource(&mut self, resource: &str) {
         self.facts
-            .push(fact("resource", &[s("ambient"), string(resource)]));
+            .push(builder::fact("resource", &[builder::s("ambient"), builder::string(resource)]));
     }
 
 
     #[wasm_bindgen(js_name = addOperation)]
     pub fn add_operation(&mut self, operation: &str) {
         self.facts
-            .push(fact("operation", &[s("ambient"), s(operation)]));
+            .push(builder::fact("operation", &[builder::s("ambient"), builder::s(operation)]));
     }
 
     #[wasm_bindgen(js_name = setTime)]
@@ -65,15 +65,15 @@ impl Verifier {
         self.facts.retain(|f| f.0.name != "time");
 
         self.facts
-            .push(fact("time", &[s("ambient"), date(&SystemTime::now())]));
+            .push(builder::fact("time", &[builder::s("ambient"), builder::date(&SystemTime::now())]));
     }
 
     #[wasm_bindgen(js_name = revocationCheck)]
     pub fn revocation_check(&mut self, ids: &[i64]) {
-        let caveat = RuleBind {
+        let caveat = Rule {
           head_name: "revocation_check".to_string(),
-          head_ids: vec![AtomBind { variable: Some(0), ..Default::default() }],
-          predicates: vec![PredicateBind { name: "revocation_id".to_string(), ids: vec![AtomBind { variable: Some(0), ..Default::default() }] }],
+          head_ids: vec![Atom { variable: Some(0), ..Default::default() }],
+          predicates: vec![Predicate { name: "revocation_id".to_string(), ids: vec![Atom { variable: Some(0), ..Default::default() }] }],
           constraints: vec![Constraint {
             id: 0,
             kind: ConstraintKind::Integer,

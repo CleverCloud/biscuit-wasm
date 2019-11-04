@@ -13,7 +13,7 @@ use super::Biscuit;
 
 #[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
-pub struct AtomBind {
+pub struct Atom {
   pub(crate) integer: Option<i64>,
   pub(crate) string: Option<String>,
   pub(crate) symbol: Option<String>,
@@ -21,9 +21,9 @@ pub struct AtomBind {
   pub(crate) variable: Option<u32>,
 }
 
-impl AtomBind {
+impl Atom {
   pub fn into_atom(self) -> builder::Atom {
-    let AtomBind { integer, string, symbol, date, variable } = self;
+    let Atom { integer, string, symbol, date, variable } = self;
 
     if let Some(i) = integer {
       builder::int(i)
@@ -36,43 +36,43 @@ impl AtomBind {
     } else if let Some(i) = variable {
       builder::variable(i)
     } else {
-      panic!("invalid atom: {:?}", AtomBind { integer, string, symbol, date, variable });
+      panic!("invalid atom: {:?}", Atom { integer, string, symbol, date, variable });
     }
   }
 }
 
 #[wasm_bindgen]
 pub fn integer(i: i64) -> JsValue {
-  JsValue::from_serde(&AtomBind { integer: Some(i), ..Default::default() }).unwrap()
+  JsValue::from_serde(&Atom { integer: Some(i), ..Default::default() }).unwrap()
 }
 
 #[wasm_bindgen]
 pub fn string(s: &str) -> JsValue {
-  JsValue::from_serde(&AtomBind { string: Some(s.to_string()), ..Default::default() }).unwrap()
+  JsValue::from_serde(&Atom { string: Some(s.to_string()), ..Default::default() }).unwrap()
 }
 
 #[wasm_bindgen]
 pub fn symbol(s: &str) -> JsValue {
-  JsValue::from_serde(&AtomBind { symbol: Some(s.to_string()), ..Default::default() }).unwrap()
+  JsValue::from_serde(&Atom { symbol: Some(s.to_string()), ..Default::default() }).unwrap()
 }
 
 #[wasm_bindgen]
 pub fn date(i: u64) -> JsValue {
-  JsValue::from_serde(&AtomBind { date: Some(i), ..Default::default() }).unwrap()
+  JsValue::from_serde(&Atom { date: Some(i), ..Default::default() }).unwrap()
 }
 
 #[wasm_bindgen]
 pub fn variable(i: u32) -> JsValue {
-  JsValue::from_serde(&AtomBind { variable: Some(i), ..Default::default() }).unwrap()
+  JsValue::from_serde(&Atom { variable: Some(i), ..Default::default() }).unwrap()
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct PredicateBind {
+pub struct Predicate {
   pub name: String,
-  pub ids: Vec<AtomBind>,
+  pub ids: Vec<Atom>,
 }
 
-impl PredicateBind {
+impl Predicate {
   pub fn into_predicate(mut self) -> builder::Predicate {
     builder::Predicate {
       name: self.name,
@@ -82,9 +82,9 @@ impl PredicateBind {
 }
 
 #[wasm_bindgen]
-pub struct FactBind(pub(crate) PredicateBind);
+pub struct Fact(pub(crate) Predicate);
 
-impl FactBind {
+impl Fact {
     pub fn convert(&self, symbols: &mut SymbolTable) -> datalog::Fact {
         datalog::Fact {
             predicate: self.0.clone().into_predicate().convert(symbols),
@@ -96,10 +96,10 @@ impl FactBind {
     }
 }
 
-#[wasm_bindgen(js_name = fact)]
-pub fn fact_bind(name: &str, ids: JsValue) -> FactBind {
-    let ids: Vec<AtomBind> = ids.into_serde().expect("incorrect atom vec");
-    FactBind(PredicateBind { name: name.to_string(), ids})
+#[wasm_bindgen]
+pub fn fact(name: &str, ids: JsValue) -> Fact {
+    let ids: Vec<Atom> = ids.into_serde().expect("incorrect atom vec");
+    Fact(Predicate { name: name.to_string(), ids})
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -172,7 +172,7 @@ impl Constraint {
 
         (ConstraintKind::Symbol, "in", ConstraintData::StringSet(s)) => builder::ConstraintKind::Symbol(builder::SymbolConstraint::In(s)),
         (ConstraintKind::Symbol, "not in", ConstraintData::StringSet(s)) => builder::ConstraintKind::Symbol(builder::SymbolConstraint::NotIn(s)),
-        (k, o, d) => panic!("invalid constraint: {:?}", Constraint { id: self.id, kind: k, operation: self.operation, data: d }),
+        (k, _, d) => panic!("invalid constraint: {:?}", Constraint { id: self.id, kind: k, operation: self.operation, data: d }),
       };
 
       builder::Constraint {
@@ -184,14 +184,14 @@ impl Constraint {
 
 #[wasm_bindgen()]
 #[derive(Debug, Clone, PartialEq)]
-pub struct RuleBind{
+pub struct Rule{
     pub(crate) head_name: String,
-    pub(crate) head_ids: Vec<AtomBind>,
-    pub(crate) predicates: Vec<PredicateBind>,
+    pub(crate) head_ids: Vec<Atom>,
+    pub(crate) predicates: Vec<Predicate>,
     pub(crate) constraints: Vec<Constraint>,
 }
 
-impl RuleBind {
+impl Rule {
     pub fn into_rule(mut self) -> builder::Rule {
         let head_ids = self.head_ids.drain(..).map(|a| a.into_atom()).collect::<Vec<_>>();
         let predicates = self.predicates.drain(..).map(|p| p.into_predicate()).collect::<Vec<_>>();
@@ -200,15 +200,15 @@ impl RuleBind {
     }
 }
 
-#[wasm_bindgen(js_name = rule)]
-pub fn rule_bind(
+#[wasm_bindgen]
+pub fn rule(
     head_name: &str,
     head_ids: JsValue,
     predicates: JsValue,
-) -> RuleBind {
-    let head_ids: Vec<AtomBind> = head_ids.into_serde().expect("incorrect atom vec");
-    let predicates: Vec<PredicateBind> = predicates.into_serde().unwrap();
-    RuleBind {
+) -> Rule {
+    let head_ids: Vec<Atom> = head_ids.into_serde().expect("incorrect atom vec");
+    let predicates: Vec<Predicate> = predicates.into_serde().unwrap();
+    Rule {
         head_name: head_name.to_string(),
         head_ids,
         predicates,
@@ -222,12 +222,12 @@ pub fn constrained_rule(
     head_ids: JsValue,
     predicates: JsValue,
     constraints: JsValue,
-) -> RuleBind {
-    let head_ids: Vec<AtomBind> = head_ids.into_serde().expect("incorrect atom vec");
-    let predicates: Vec<PredicateBind> = predicates.into_serde().unwrap();
+) -> Rule {
+    let head_ids: Vec<Atom> = head_ids.into_serde().expect("incorrect atom vec");
+    let predicates: Vec<Predicate> = predicates.into_serde().unwrap();
     let constraints: Vec<Constraint> = constraints.into_serde().unwrap();
 
-    RuleBind {
+    Rule {
         head_name: head_name.to_string(),
         head_ids,
         predicates,
@@ -236,15 +236,15 @@ pub fn constrained_rule(
 }
 
 #[wasm_bindgen()]
-pub struct BiscuitBuilderBind {
+pub struct BiscuitBuilder {
     pub(crate) symbols: SymbolTable,
-    pub(crate) facts: Vec<FactBind>,
-    pub(crate) rules: Vec<RuleBind>,
-    pub(crate) caveats: Vec<RuleBind>,
+    pub(crate) facts: Vec<Fact>,
+    pub(crate) rules: Vec<Rule>,
+    pub(crate) caveats: Vec<Rule>,
 }
 
 #[wasm_bindgen()]
-impl BiscuitBuilderBind {
+impl BiscuitBuilder {
     #[wasm_bindgen(constructor)]
     pub fn new(base_symbols: JsValue) -> Self {
         let symbol_strings: Vec<String> = base_symbols.into_serde().expect("Can't format symbols table");
@@ -269,28 +269,28 @@ impl BiscuitBuilderBind {
     }
 
     #[wasm_bindgen(js_name = addAuthorityFact)]
-    pub fn add_authority_fact(&mut self, fact: FactBind) {
+    pub fn add_authority_fact(&mut self, fact: Fact) {
         self.facts.push(fact);
     }
 
     #[wasm_bindgen(js_name = addAuthorityRule)]
-    pub fn add_authority_rule(&mut self, rule_bind: RuleBind) {
+    pub fn add_authority_rule(&mut self, rule_bind: Rule) {
         self.rules.push(rule_bind);
     }
 
     #[wasm_bindgen(js_name = addAuthorityCaveat)]
-    pub fn add_authority_caveat(&mut self, rule_bind: RuleBind) {
+    pub fn add_authority_caveat(&mut self, rule_bind: Rule) {
         self.caveats.push(rule_bind);
     }
 
     #[wasm_bindgen(js_name = addRight)]
     pub fn add_right(&mut self, resource: &str, right: &str) {
-        self.add_authority_fact(FactBind(PredicateBind{
+        self.add_authority_fact(Fact(Predicate{
             name: "right".to_string(),
             ids: vec![
-              AtomBind { string: Some("authority".to_string()), ..Default::default()},
-              AtomBind { string: Some(resource.to_string()), ..Default::default()},
-              AtomBind { symbol: Some(right.to_string()), ..Default::default() }],
+              Atom { string: Some("authority".to_string()), ..Default::default()},
+              Atom { string: Some(resource.to_string()), ..Default::default()},
+              Atom { symbol: Some(right.to_string()), ..Default::default() }],
         }));
     }
 
