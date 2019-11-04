@@ -18,32 +18,35 @@ In this example we will see how we can create a token, add some caveats, seriali
 // to verify the token
 let keypair = wasm.newKeypair()
 
+// the root public key will be used for the verification phase
+let public_key = keypair.publicKey()
+
 // creating a first token
 // the first block of the token is the authority block. It contains global
 // information like which operation types are available
-let builder = wasm.BiscuitBuilderBind.newWithDefaultSymbols()
+let builder = new wasm.Biscuit()
 
 // let's define some access rights
 // every fact added to the authority block must have the authority fact
 let fact = wasm.fact("right", [
-    { Symbol: "authority" },
-    { Str: "file1" },
-    { Symbol: "read" }
+    { symbol: "authority" },
+    { string: "file1" },
+    { symbol: "read" }
 ])
 
 builder.addAuthorityFact(fact)
 
 fact = wasm.fact("right", [
-    { Symbol: "authority" },
-    { Str: "file2" },
-    { Symbol: "read" }
+    { symbol: "authority" },
+    { string: "file2" },
+    { symbol: "read" }
 ])
 builder.addAuthorityFact(fact)
 
 fact = wasm.fact("right", [
-    { Symbol: "authority" },
-    { Str: "file1" },
-    { Symbol: "write" }
+    { symbol: "authority" },
+    { string: "file1" },
+    { symbol: "write" }
 ])
 
 builder.addAuthorityFact(fact)
@@ -52,8 +55,9 @@ builder.addAuthorityFact(fact)
 let biscuit = builder.build(keypair)
 
 let keypair2 = wasm.newKeypair()
-let blockbuilder = biscuit.createBlock()
-let block = blockbuilder.build()
+let block = biscuit.createBlock()
+
+block.addFact(wasm.fact("revocation_id", { integer: 1234 }))
 
 let biscuit2 = biscuit.append(keypair2, block)
 
@@ -63,18 +67,18 @@ let verifier = new wasm.Verifier()
 
 let rule = wasm.rule(
     "right",
-    [{ Symbol: "right" }],
+    [{ symbol: "right" }],
     [
         {
             name: "right",
-            ids: [{ Symbol: "authority" }, { Str: "file2" }, { Symbol: "write" }]
+            ids: [{ symbol: "authority" }, { string: "file2" }, { symbol: "write" }]
         }
     ]
 )
 
 // we will check that the token has the corresponding right
 verifier.addAuthorityCaveat(rule)
-verifier.verify(biscuit2)
+verifier.verify(public_key, biscuit2)
 ```
 
 ## Run the test
