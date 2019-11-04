@@ -1,0 +1,18 @@
+language: rust
+rust    : nightly
+
+addons:
+  firefox: latest
+  chrome : stable
+
+install:
+  - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+script:
+
+  # this will test the non wasm targets if your crate has those, otherwise remove this line.
+  #
+  - cargo test
+  - wasm-pack test --node
+  - wasm-pack test --firefox --headless
+  - wasm-pack test --chrome  --headless
