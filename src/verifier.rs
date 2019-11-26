@@ -109,5 +109,8 @@ impl Verifier {
         verifier.verify()
           .map_err(|e| {let e: crate::error::Error = e.into(); e})
           .map_err(|e| JsValue::from_serde(&e).expect("error serde"))
+          .map(|_| {
+            //FIXME: queries not supported yet
+          })
     }
 }

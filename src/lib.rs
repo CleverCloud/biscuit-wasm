@@ -1,6 +1,7 @@
+extern crate biscuit_auth as biscuit;
+
 use biscuit::datalog;
 use biscuit::token;
-use biscuit;
 use wasm_bindgen::prelude::*;
 use rand::rngs::OsRng;
 
