@@ -1,5 +1,7 @@
 language: rust
-rust    : nightly
+rust: nightly
+cache: cargo
+sudo: false
 
 addons:
   firefox: latest
@@ -7,6 +9,9 @@ addons:
 
 install:
   - curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+before_script:
+  - rustup target add wasm32-unknown-unknown
 
 script:
 
