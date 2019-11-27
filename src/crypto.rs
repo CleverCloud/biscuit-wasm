@@ -10,7 +10,7 @@ pub struct KeyPair(pub(crate) crypto::KeyPair);
 impl KeyPair {
   #[wasm_bindgen(constructor)]
   pub fn new() -> KeyPair {
-      let mut rng = OsRng::new().unwrap();
+      let mut rng = OsRng;
       KeyPair(crypto::KeyPair::new(&mut rng))
   }
 

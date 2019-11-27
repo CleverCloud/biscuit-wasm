@@ -296,7 +296,7 @@ impl BiscuitBuilder {
 
     #[wasm_bindgen]
     pub fn build(self, root: crate::crypto::KeyPair) -> Result<Biscuit, JsValue> {
-        let mut rng = OsRng::new().expect("os range");
+        let mut rng = OsRng;
         let symbols = self.symbols;
         let mut builder = token::Biscuit::builder_with_symbols(&mut rng, &root.0, symbols);
 

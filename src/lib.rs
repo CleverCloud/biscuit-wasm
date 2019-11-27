@@ -132,7 +132,7 @@ impl Biscuit {
 
         let block = builder.build();
 
-        let mut rng = OsRng::new().expect("can't create OS rng");
+        let mut rng = OsRng;
         self.0.append(&mut rng, &keypair.0, block)
             .map_err(|e| { let e: error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).expect("error append"))
