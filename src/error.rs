@@ -19,6 +19,8 @@ pub enum Error {
     Sealed,
     /// caveat validation failed
     FailedLogic(Logic),
+    /// Datalog parsing error
+    ParseError,
 }
 
 impl From<error::Token> for Error {
@@ -32,6 +34,7 @@ impl From<error::Token> for Error {
         error::Token::MissingSymbols => Error::MissingSymbols,
         error::Token::Sealed => Error::Sealed,
         error::Token::FailedLogic(l) => Error::FailedLogic(l.into()),
+        error::Token::ParseError => Error::ParseError,
       }
     }
 }

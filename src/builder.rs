@@ -301,15 +301,15 @@ impl BiscuitBuilder {
         let mut builder = token::Biscuit::builder_with_symbols(&mut rng, &root.0, symbols);
 
         for fact in self.facts {
-          builder.add_authority_fact(&fact.into_fact());
+          builder.add_authority_fact(fact.into_fact());
         }
 
         for rule in self.rules {
-          builder.add_authority_rule(&rule.into_rule());
+          builder.add_authority_rule(rule.into_rule());
         }
 
         for caveat in self.caveats {
-          builder.add_authority_caveat(&caveat.into_rule());
+          builder.add_authority_caveat(caveat.into_rule());
         }
 
         builder.build()

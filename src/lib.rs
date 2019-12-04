@@ -119,15 +119,15 @@ impl Biscuit {
         let mut builder = self.0.create_block();
 
         for fact in block_builder.facts {
-          builder.add_fact(&fact.into_fact());
+          builder.add_fact(fact.into_fact());
         }
 
         for rule in block_builder.rules {
-          builder.add_rule(&rule.into_rule());
+          builder.add_rule(rule.into_rule());
         }
 
         for caveat in block_builder.caveats {
-          builder.add_caveat(&caveat.into_rule());
+          builder.add_caveat(caveat.into_rule());
         }
 
         let block = builder.build();
