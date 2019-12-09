@@ -26,9 +26,17 @@ const newBlock = index => {
   const serializedI = document.getElementById('serialized_token');
   const genkeyB = document.getElementById('generate_keys');
   const newtokenB = document.getElementById('new_token');
+  const basictokenB = document.getElementById('basic_rights');
+  const alltokenB = document.getElementById('all_rights');
   const verifyB = document.getElementById('verify');
   const workD = document.getElementById('work');
   const blocksU = document.getElementById('blocks');
+	const tokenContent = document.getElementById('token_content');
+
+  const loadKeys = () => {
+    let decoded = fromHex(privkeyI.value);
+    return biscuit.KeyPair.fromBytes(decoded);
+  }
 
   genkeyB.addEventListener("click", () => {
     let privkey = new Uint8Array(32);
@@ -44,12 +52,22 @@ const newBlock = index => {
     pubkeyI.value = toHex(pubkey);
   })
 
+  const printToken = token => {
+    let serialized = token.toVec();
+    let b64 = btoa(String.fromCharCode(...serialized));
+    serializedI.value = b64;
+
+    tokenContent.innerText = token.print();
+    const sizeS = document.getElementById('token_size');
+    sizeS.innerText = "("+b64.length+" bytes in base64)";
+  };
+
+  /*
   newtokenB.addEventListener("click", () => {
     let builder = new biscuit.Biscuit()
     let firstBlock = newBlock(0);
     blocksU.appendChild(firstBlock);
     const block0Build = document.getElementById('block_0_build');
-    const tokenContent = document.getElementById('token_content');
 
     block0Build.addEventListener("click", () => {
       let decoded = fromHex(privkeyI.value);
@@ -62,20 +80,17 @@ const newBlock = index => {
       const block0Serialized = document.getElementById('block_0_serialized');
       let b64 = btoa(String.fromCharCode(...serialized));
       block0Serialized.innerText = "Serialized ("+serialized.length+" bytes -> "+b64.length+" in base64): "+b64;
-      console.log("b64 length"+b64.length);
-      serializedI.value = b64;
-
-      tokenContent.innerText = token.print();
-      console.log("hello")
+      printToken(token);
     });
+
 
     let decoded = fromHex(privkeyI.value);
     let keypair = biscuit.KeyPair.fromBytes(decoded);
     tokenContent.innerText = builder.print(keypair);
 
-
     console.log("done");
   });
+  */
 
   verifyB.addEventListener("click", () => {
     let data = new Uint8Array(atob(serializedI.value).split("").map(function(c) {
@@ -88,6 +103,30 @@ const newBlock = index => {
     let verifier = new biscuit.Verifier()
     verifier.addResource(resourceI.value);
     verifier.addOperation(operationI.value);
+    let rule = biscuit.rule(
+      "check_right",
+      [
+        { variable: 0 },
+        { variable: 1 }
+      ],
+      [
+        {
+          name: "resource",
+          ids: [{ symbol: "ambient" }, { variable: 0 }]
+        },
+        {
+          name: "operation",
+          ids: [{ symbol: "ambient" }, { variable: 1 }]
+        },
+        {
+          name: "right",
+          ids: [{ symbol: "authority" }, { variable: 0 }, { variable: 1 }]
+        }
+      ]
+    );
+
+    verifier.addAuthorityCaveat(rule)
+    //verifier.addBlockCaveat(rule)
 
     let decoded = fromHex(privkeyI.value);
     let k = biscuit.KeyPair.fromBytes(decoded);
@@ -97,15 +136,44 @@ const newBlock = index => {
       let result = verifier.verify(k.publicKey(), token);
       resI.innerText = "OK";
     } catch(error) {
-      resI.innerText = error;
+      resI.innerText = JSON.stringify(error);
     }
   });
 
+  basictokenB.addEventListener("click", () => {
+
+    let builder = new biscuit.Biscuit()
+    let fact = biscuit.fact("right", [
+      biscuit.symbol("authority"),
+      biscuit.string("/a/file1.txt"),
+      biscuit.symbol("read")
+    ])
+    builder.addAuthorityFact(fact)
+
+    fact = biscuit.fact("right", [
+      { symbol: "authority" },
+      { string: "/b/file2.txt" },
+      { symbol: "read" }
+    ])
+    builder.addAuthorityFact(fact)
+
+    fact = biscuit.fact("right", [
+      { symbol: "authority" },
+      { string: "/a/file1.txt" },
+      { symbol: "write" }
+    ])
+    builder.addAuthorityFact(fact)
+
+    let token = builder.build(loadKeys())
+
+    printToken(token);
+
+  });
+/*
   let decoded = fromHex(privkeyI.value);
   let k = biscuit.KeyPair.fromBytes(decoded);
   console.log(k);
 
-/*
   let keypair = new biscuit.KeyPair()
   let public_key = keypair.publicKey()
 
@@ -155,26 +223,6 @@ const newBlock = index => {
   verifier.addAuthorityCaveat(rule)
 
   verifier.verify(public_key, token2)
-*/
-
-/*
-	const input = document.getElementById('input');
-	const output = document.getElementById('output');
-
-	const calculate = () => {
-
-		const number = parseInt(input.value);
-		const result = module.factorial(number);
-		output.innerText = `${result}`;
-	};
-
-	// Calculate on load
-
-	calculate();
-
-	// Calculate on input
-
-	input.addEventListener('input', calculate);
 */
 
 })();

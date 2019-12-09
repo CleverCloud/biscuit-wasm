@@ -11,16 +11,20 @@
 <body>
   <div id="header">
     <input type="button" id="generate_keys" value="Generate keys"></input>
-    <input type="button" id="new_token" value="New token"></input>
+    <!--<input type="button" id="new_token" value="New token"></input>
+    <input type="button" id="derive_token" value="Derive token"></input>
+    -->
+    <input type="button" id="basic_rights" value="Basic rights token"></input>
+    <input type="button" id="all_rights" value="All rights token"></input>
   </div>
   <div id="keys">
-    Private key: <input type="text" size="32" id="private_key" value="79a33df5e9912e3fa1b7b7d87275c58dc7e8348f45ae783a5aaaf3bceb6bb10e"></input>
-    Public key: <input type="text" size="32" id="public_key" value="529e780f28d9181c968b0eab9977ed8494a27a4544c3adc1910f41bb3dc36958"></input>
+    Private key: <input type="text" size="75" id="private_key" value="79a33df5e9912e3fa1b7b7d87275c58dc7e8348f45ae783a5aaaf3bceb6bb10e"></input>
+    Public key: <input type="text" size="76" id="public_key"   value="529e780f28d9181c968b0eab9977ed8494a27a4544c3adc1910f41bb3dc36958"></input>
   </div>
   <br/>
-  Serialized token: <input type="textarea" id="serialized_token" value=""></input>
+  Serialized token <span id="token_size"></span>: <input type="textarea" id="serialized_token" size="300" value=""></input><br />
   Token Content:<br/>
-  <div id="token_content" width="100" height="300" style="background:gray"></div>
+  <pre id="token_content" width="100" height="300" style="background:gray"></pre>
 
   <div id="verification">
     Verification:<br />
