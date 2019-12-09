@@ -184,19 +184,19 @@ const newBlock = index => {
           ids: [{ symbol: "ambient" }, { variable: 1 }]
         }
       ],
-      [{id: 0, kind: "string", operation: "prefix", data: "/apps/"}]
+      [{id: 0, kind: "string", operation: "prefix", data: "/"}]
     ));
 
     let token = builder.build(loadKeys())
     printToken(token);
   });
 
-  let attenuationData = document.getElementById("attenuation_data");
   document.getElementById('attenuation_operation').addEventListener("click", () => {
     let data = new Uint8Array(atob(serializedI.value).split("").map(function(c) {
           return c.charCodeAt(0); }));
     let token = biscuit.Biscuit.from(data);
 
+    let attenuationData = document.getElementById("attenuation_operation_data");
     let operation = attenuationData.value;
 
     let block = token.createBlock();
@@ -204,6 +204,33 @@ const newBlock = index => {
       "operation_check",
       [{ symbol: operation }],
       [{ name: "operation", ids: [{ symbol: "ambient" }, { symbol: operation }] }]
+    ));
+
+    let keypair2 = new biscuit.KeyPair()
+    let token2 = token.append(keypair2, block);
+
+    printToken(token2);
+  });
+
+  document.getElementById('attenuation_resource_prefix').addEventListener("click", () => {
+    let data = new Uint8Array(atob(serializedI.value).split("").map(function(c) {
+          return c.charCodeAt(0); }));
+    let token = biscuit.Biscuit.from(data);
+
+    let attenuationData = document.getElementById("attenuation_resource_prefix_data");
+    let resourcePrefix = attenuationData.value;
+
+    let block = token.createBlock();
+    block.addCaveat(biscuit.constrained_rule(
+      "resource_check",
+      [{ variable: 0 }],
+      [
+        {
+          name: "resource",
+          ids: [{ symbol: "ambient" }, { variable: 0 }]
+        },
+      ],
+      [{id: 0, kind: "string", operation: "prefix", data: resourcePrefix}]
     ));
 
     let keypair2 = new biscuit.KeyPair()
