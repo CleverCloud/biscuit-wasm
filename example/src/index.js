@@ -141,8 +141,8 @@ const newBlock = index => {
   });
 
   basictokenB.addEventListener("click", () => {
-
     let builder = new biscuit.Biscuit()
+
     let fact = biscuit.fact("right", [
       biscuit.symbol("authority"),
       biscuit.string("/a/file1.txt"),
@@ -165,10 +165,32 @@ const newBlock = index => {
     builder.addAuthorityFact(fact)
 
     let token = builder.build(loadKeys())
-
     printToken(token);
-
   });
+
+  alltokenB.addEventListener("click", () => {
+    let builder = new biscuit.Biscuit()
+
+    builder.addAuthorityRule(biscuit.constrained_rule(
+      "right",
+      [{ symbol: "authority" }, { variable: 0 }, { variable: 1}],
+      [
+        {
+          name: "resource",
+          ids: [{ symbol: "ambient" }, { variable: 0 }]
+        },
+        {
+          name: "operation",
+          ids: [{ symbol: "ambient" }, { variable: 1 }]
+        }
+      ],
+      [{id: 0, kind: "string", operation: "prefix", data: "/"}]
+    ));
+
+    let token = builder.build(loadKeys())
+    printToken(token);
+  });
+
 /*
   let decoded = fromHex(privkeyI.value);
   let k = biscuit.KeyPair.fromBytes(decoded);
