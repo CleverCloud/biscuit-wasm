@@ -31,7 +31,7 @@ const newBlock = index => {
   const verifyB = document.getElementById('verify');
   const workD = document.getElementById('work');
   const blocksU = document.getElementById('blocks');
-	const tokenContent = document.getElementById('token_content');
+  const tokenContent = document.getElementById('token_content');
 
   const loadKeys = () => {
     let decoded = fromHex(privkeyI.value);
@@ -145,21 +145,21 @@ const newBlock = index => {
 
     let fact = biscuit.fact("right", [
       biscuit.symbol("authority"),
-      biscuit.string("/a/file1.txt"),
+      biscuit.string("/apps/123"),
       biscuit.symbol("read")
     ])
     builder.addAuthorityFact(fact)
 
     fact = biscuit.fact("right", [
       { symbol: "authority" },
-      { string: "/b/file2.txt" },
+      { string: "/apps/456" },
       { symbol: "read" }
     ])
     builder.addAuthorityFact(fact)
 
     fact = biscuit.fact("right", [
       { symbol: "authority" },
-      { string: "/a/file1.txt" },
+      { string: "/apps/123" },
       { symbol: "write" }
     ])
     builder.addAuthorityFact(fact)
@@ -184,69 +184,33 @@ const newBlock = index => {
           ids: [{ symbol: "ambient" }, { variable: 1 }]
         }
       ],
-      [{id: 0, kind: "string", operation: "prefix", data: "/"}]
+      [{id: 0, kind: "string", operation: "prefix", data: "/apps/"}]
     ));
 
     let token = builder.build(loadKeys())
     printToken(token);
   });
 
-/*
-  let decoded = fromHex(privkeyI.value);
-  let k = biscuit.KeyPair.fromBytes(decoded);
-  console.log(k);
+  let attenuationData = document.getElementById("attenuation_data");
+  document.getElementById('attenuation_operation').addEventListener("click", () => {
+    let data = new Uint8Array(atob(serializedI.value).split("").map(function(c) {
+          return c.charCodeAt(0); }));
+    let token = biscuit.Biscuit.from(data);
 
-  let keypair = new biscuit.KeyPair()
-  let public_key = keypair.publicKey()
+    let operation = attenuationData.value;
 
-  let builder = new biscuit.Biscuit()
-  let fact = biscuit.fact("right", [
-    biscuit.symbol("authority"),
-    biscuit.string("file1"),
-    biscuit.symbol("read")
-  ])
-  builder.addAuthorityFact(fact)
+    let block = token.createBlock();
+    block.addCaveat(biscuit.rule(
+      "operation_check",
+      [{ symbol: operation }],
+      [{ name: "operation", ids: [{ symbol: "ambient" }, { symbol: operation }] }]
+    ));
 
-  fact = biscuit.fact("right", [
-    { symbol: "authority" },
-    { string: "file2" },
-    { symbol: "read" }
-  ])
-  builder.addAuthorityFact(fact)
+    let keypair2 = new biscuit.KeyPair()
+    let token2 = token.append(keypair2, block);
 
-  fact = biscuit.fact("right", [
-    { symbol: "authority" },
-    { string: "file1" },
-    { symbol: "write" }
-  ])
-  builder.addAuthorityFact(fact)
-
-  let token = builder.build(keypair)
-  console.log(token.print())
-
-  let keypair2 = new biscuit.KeyPair()
-  let block = token.createBlock()
-
-  let token2 = token.append(keypair2, block)
-  console.log(token2.print())
-
-  let verifier = new biscuit.Verifier()
-  let rule = biscuit.rule(
-    "right",
-    [{ symbol: "right" }],
-    [
-      {
-        name: "right",
-        ids: [{ symbol: "authority" }, { string: "file2" }, { symbol: "write" }]
-      }
-    ]
-  )
-
-  verifier.addAuthorityCaveat(rule)
-
-  verifier.verify(public_key, token2)
-*/
-
+    printToken(token2);
+  });
 })();
 
 
