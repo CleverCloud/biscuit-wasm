@@ -82,6 +82,7 @@ impl Predicate {
 }
 
 #[wasm_bindgen]
+#[derive(Clone)]
 pub struct Fact(pub(crate) Predicate);
 
 impl Fact {
@@ -236,6 +237,7 @@ pub fn constrained_rule(
 }
 
 #[wasm_bindgen()]
+#[derive(Clone)]
 pub struct BiscuitBuilder {
     pub(crate) symbols: SymbolTable,
     pub(crate) facts: Vec<Fact>,
@@ -316,6 +318,11 @@ impl BiscuitBuilder {
             .map_err(|e| { let e: crate::error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).unwrap())
             .map(Biscuit)
+    }
+
+    #[wasm_bindgen]
+    pub fn print(&self, root: crate::crypto::KeyPair) -> Result<String, JsValue> {
+      Ok(self.clone().build(root).unwrap().print())
     }
 }
 
