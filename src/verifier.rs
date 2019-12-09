@@ -3,7 +3,7 @@ use crate::Biscuit;
 
 use biscuit::token::builder;
 
-use std::time::SystemTime;
+use std::time::{Duration, SystemTime};
 
 use wasm_bindgen::prelude::*;
 
@@ -61,11 +61,12 @@ impl Verifier {
     }
 
     #[wasm_bindgen(js_name = setTime)]
-    pub fn set_time(&mut self) {
+    pub fn set_time(&mut self, i: u64) {
         self.facts.retain(|f| f.0.name != "time");
 
+        let t = SystemTime::UNIX_EPOCH + Duration::new(i, 0);
         self.facts
-            .push(builder::fact("time", &[builder::s("ambient"), builder::date(&SystemTime::now())]));
+            .push(builder::fact("time", &[builder::s("ambient"), builder::date(&t)]));
     }
 
     #[wasm_bindgen(js_name = revocationCheck)]

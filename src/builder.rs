@@ -12,6 +12,20 @@ use std::time::{SystemTime, Duration};
 use super::Biscuit;
 
 #[wasm_bindgen]
+extern "C" {
+    // Use `js_namespace` here to bind `console.log(..)` instead of just
+    // `log(..)`
+    #[wasm_bindgen(js_namespace = console)]
+    fn log(s: &str);
+}
+
+macro_rules! console_log {
+    // Note that this is using the `log` function imported above during
+    // `bare_bones`
+    ($($t:tt)*) => (log(&format_args!($($t)*).to_string()))
+}
+
+#[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
 pub struct Atom {
   pub(crate) integer: Option<i64>,
@@ -147,6 +161,8 @@ pub enum ConstraintData {
 
 impl Constraint {
     pub fn into_constraint(self) -> builder::Constraint {
+      console_log!("into_constraint({:?}, {:?}, {:?}", self.kind, self.operation, self.data);
+
       let kind = match (self.kind, self.operation.as_str(), self.data) {
         (ConstraintKind::Integer, "<", ConstraintData::Integer(i)) => builder::ConstraintKind::Integer(builder::IntConstraint::Lower(i)),
         (ConstraintKind::Integer, ">", ConstraintData::Integer(i)) => builder::ConstraintKind::Integer(builder::IntConstraint::Larger(i)),
@@ -162,11 +178,11 @@ impl Constraint {
         (ConstraintKind::String, "in", ConstraintData::StringSet(s)) => builder::ConstraintKind::String(builder::StrConstraint::In(s)),
         (ConstraintKind::String, "not in", ConstraintData::StringSet(s)) => builder::ConstraintKind::String(builder::StrConstraint::NotIn(s)),
 
-        (ConstraintKind::Date, "<", ConstraintData::Date(i)) => {
+        (ConstraintKind::Date, "<=", ConstraintData::Integer(i)) => {
           let t = SystemTime::UNIX_EPOCH + Duration::from_secs(i as u64);
           builder::ConstraintKind::Date(builder::DateConstraint::Before(t))
         }
-        (ConstraintKind::Date, ">", ConstraintData::Date(i)) => {
+        (ConstraintKind::Date, ">=", ConstraintData::Integer(i)) => {
           let t = SystemTime::UNIX_EPOCH + Duration::from_secs(i as u64);
           builder::ConstraintKind::Date(builder::DateConstraint::After(t))
         }

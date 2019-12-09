@@ -103,6 +103,8 @@ const newBlock = index => {
     let verifier = new biscuit.Verifier()
     verifier.addResource(resourceI.value);
     verifier.addOperation(operationI.value);
+    verifier.setTime((new Date().getTime() / 1000).toFixed(0));
+
     let rule = biscuit.rule(
       "check_right",
       [
@@ -231,6 +233,35 @@ const newBlock = index => {
         },
       ],
       [{id: 0, kind: "string", operation: "prefix", data: resourcePrefix}]
+    ));
+
+    let keypair2 = new biscuit.KeyPair()
+    let token2 = token.append(keypair2, block);
+
+    printToken(token2);
+  });
+
+  document.getElementById('attenuation_expiration').addEventListener("click", () => {
+    let data = new Uint8Array(atob(serializedI.value).split("").map(function(c) {
+          return c.charCodeAt(0); }));
+    let token = biscuit.Biscuit.from(data);
+
+    let attenuationData = document.getElementById("attenuation_expiration_data");
+    let seconds = parseInt(attenuationData.value);
+    let expirationDate = parseInt(((new Date((new Date()).getTime() + seconds * 1000)) / 1000).toFixed(0));
+    console.log("expires at "+expirationDate);
+
+    let block = token.createBlock();
+    block.addCaveat(biscuit.constrained_rule(
+      "expiration_check",
+      [{ variable: 0 }],
+      [
+        {
+          name: "time",
+          ids: [{ symbol: "ambient" }, { variable: 0 }]
+        },
+      ],
+      [{id: 0, kind: "date", operation: "<=", data: expirationDate}]
     ));
 
     let keypair2 = new biscuit.KeyPair()
