@@ -1,12 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>Wasmpack Example - Factorial</title>
-	<link rel="stylesheet" href="style.css">
-
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Biscuit example</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div id="header">
@@ -24,21 +23,22 @@
   <br/>
   Serialized token <span id="token_size"></span>: <input type="textarea" id="serialized_token" size="300" value=""></input><br />
   Token Content:<br/>
-  <pre id="token_content" width="100" height="300" style="background:gray"></pre>
+  <pre id="token_content" width="100px" height="300px" style="border: 1px gray solid"></pre>
 
   <div id="attenuation">
+    <h2>Attenuation</h2>
     <input type="text" size="20" id="attenuation_operation_data" placeholder="read"></input>
     <input type="button" id="attenuation_operation" value="Restrict operation"></input>
     <br />
 
-    <input type="text" size="100" id="attenuation_resource_prefix_data" placeholder="/apps/123..."></input>
+    <input type="text" size="50" id="attenuation_resource_prefix_data" placeholder="/apps/123..."></input>
     <input type="button" id="attenuation_resource_prefix" value="Resource prefix"></input>
   </div>
 
   <div id="verification">
-    Verification:<br />
-    Resource: <input type="text" size="100" id="resource" /><br/>
-    Operation: <input type="text" size="10" id="operation" /><br />
+    <h2>Verification</h2>
+    Resource: <input type="text" size="50" id="resource" placeholder="/apps/123" /><br/>
+    Operation: <input type="text" size="10" id="operation" placeholder="write" /><br />
 
     <input type="button" id="verify" value="Verify"></input>
     <div id="verification_result"></div>
