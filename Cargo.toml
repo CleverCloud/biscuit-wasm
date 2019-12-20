@@ -11,7 +11,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 #biscuit = { path = "../rust", git = "https://github.com/clevercloud/biscuit-rust" }
-biscuit-auth = "0.3"
+biscuit-auth = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 rand = { version = "0.7", features = ["wasm-bindgen"] }
 rand_core = "^0.5"

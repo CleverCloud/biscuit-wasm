@@ -26,7 +26,6 @@ fn wasm_create_biscuit_with_authority_fact_only_and_verify_should_fail_on_caveat
             assert_eq!(
                 error::Error::FailedLogic(error::Logic::FailedCaveats(vec![Verifier(
                     error::FailedVerifierCaveat {
-                        block_id: 0,
                         caveat_id: 0,
                         rule: "right(#right) <- right(#authority, \"file2\", #write) | "
                             .to_string()

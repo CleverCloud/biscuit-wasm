@@ -48,7 +48,7 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
         ]
     )
 
-    verifier.addAuthorityCaveat(rule)
+    verifier.addCaveat(rule)
 
     verifier.verify(public_key, biscuit2)
 };
