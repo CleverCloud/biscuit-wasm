@@ -10,6 +10,10 @@ pub mod crypto;
 pub mod verifier;
 pub mod error;
 
+extern crate wee_alloc;
+#[global_allocator]
+static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+
 use crate::builder::*;
 
 #[wasm_bindgen]
