@@ -10,10 +10,10 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "biscuit-wasm": "file:../pkg/",
     "webpack": "^4.41.2",
     "webpack-cli": "^3.3.10",
-    "webpack-serve": "^1.0.4",
-    "webpack-dev-server": "^3.9.0",
-    "biscuit-wasm": "file:../pkg/"
+    "webpack-dev-server": "^3.11.0",
+    "webpack-serve": "^3.2.0"
   }
 }
