@@ -127,7 +127,7 @@ const newBlock = index => {
       ]
     );
 
-    verifier.addAuthorityCaveat(rule)
+    verifier.addCaveat(rule)
     //verifier.addBlockCaveat(rule)
 
     let decoded = fromHex(privkeyI.value);
