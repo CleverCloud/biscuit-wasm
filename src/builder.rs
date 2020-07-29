@@ -97,24 +97,33 @@ impl Predicate {
 
 #[wasm_bindgen]
 #[derive(Clone)]
-pub struct Fact(pub(crate) Predicate);
+pub struct Fact(pub(crate) builder::Predicate);
 
 impl Fact {
     pub fn convert(&self, symbols: &mut SymbolTable) -> datalog::Fact {
         datalog::Fact {
-            predicate: self.0.clone().into_predicate().convert(symbols),
+            predicate: self.0.clone().convert(symbols),
         }
     }
 
     pub fn into_fact(self) -> builder::Fact {
-      builder::Fact(self.0.into_predicate())
+      builder::Fact(self.0)
+    }
+}
+
+#[wasm_bindgen]
+impl Fact {
+    #[wasm_bindgen(js_name = fromString)]
+    pub fn from_string(s: &str) -> Fact {
+        let f: builder::Fact = s.parse().expect("parsing error");
+        Fact(f.0)
     }
 }
 
 #[wasm_bindgen]
 pub fn fact(name: &str, ids: JsValue) -> Fact {
     let ids: Vec<Atom> = ids.into_serde().expect("incorrect atom vec");
-    Fact(Predicate { name: name.to_string(), ids})
+    Fact(Predicate { name: name.to_string(), ids}.into_predicate())
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -201,19 +210,22 @@ impl Constraint {
 
 #[wasm_bindgen()]
 #[derive(Debug, Clone, PartialEq)]
-pub struct Rule{
-    pub(crate) head_name: String,
-    pub(crate) head_ids: Vec<Atom>,
-    pub(crate) predicates: Vec<Predicate>,
-    pub(crate) constraints: Vec<Constraint>,
+pub struct Rule {
+    pub(crate) rule: builder::Rule,
 }
 
 impl Rule {
-    pub fn into_rule(mut self) -> builder::Rule {
-        let head_ids = self.head_ids.drain(..).map(|a| a.into_atom()).collect::<Vec<_>>();
-        let predicates = self.predicates.drain(..).map(|p| p.into_predicate()).collect::<Vec<_>>();
-        let constraints = self.constraints.drain(..).map(|p| p.into_constraint()).collect::<Vec<_>>();
-        builder::constrained_rule(&self.head_name, &head_ids, &predicates, &constraints)
+    pub fn into_rule(self) -> builder::Rule {
+        self.rule
+    }
+}
+
+#[wasm_bindgen]
+impl Rule {
+    #[wasm_bindgen(js_name = fromString)]
+    pub fn from_string(s: &str) -> Rule {
+        let rule: builder::Rule = s.parse().expect("parsing error");
+        Rule { rule }
     }
 }
 
@@ -223,14 +235,13 @@ pub fn rule(
     head_ids: JsValue,
     predicates: JsValue,
 ) -> Rule {
-    let head_ids: Vec<Atom> = head_ids.into_serde().expect("incorrect atom vec");
-    let predicates: Vec<Predicate> = predicates.into_serde().unwrap();
-    Rule {
-        head_name: head_name.to_string(),
-        head_ids,
-        predicates,
-        constraints: vec![],
-    }
+    let mut head_ids: Vec<Atom> = head_ids.into_serde().expect("incorrect atom vec");
+    let mut predicates: Vec<Predicate> = predicates.into_serde().unwrap();
+
+    let head_ids = head_ids.drain(..).map(|a| a.into_atom()).collect::<Vec<_>>();
+    let predicates = predicates.drain(..).map(|p| p.into_predicate()).collect::<Vec<_>>();
+
+    Rule { rule: builder::rule(&head_name, &head_ids, &predicates) }
 }
 
 #[wasm_bindgen]
@@ -240,16 +251,15 @@ pub fn constrained_rule(
     predicates: JsValue,
     constraints: JsValue,
 ) -> Rule {
-    let head_ids: Vec<Atom> = head_ids.into_serde().expect("incorrect atom vec");
-    let predicates: Vec<Predicate> = predicates.into_serde().unwrap();
-    let constraints: Vec<Constraint> = constraints.into_serde().unwrap();
+    let mut head_ids: Vec<Atom> = head_ids.into_serde().expect("incorrect atom vec");
+    let mut predicates: Vec<Predicate> = predicates.into_serde().unwrap();
+    let mut constraints: Vec<Constraint> = constraints.into_serde().unwrap();
 
-    Rule {
-        head_name: head_name.to_string(),
-        head_ids,
-        predicates,
-        constraints,
-    }
+    let head_ids = head_ids.drain(..).map(|a| a.into_atom()).collect::<Vec<_>>();
+    let predicates = predicates.drain(..).map(|p| p.into_predicate()).collect::<Vec<_>>();
+    let constraints = constraints.drain(..).map(|p| p.into_constraint()).collect::<Vec<_>>();
+
+    Rule { rule: builder::constrained_rule(&head_name, &head_ids, &predicates, &constraints) }
 }
 
 #[wasm_bindgen()]
@@ -309,7 +319,7 @@ impl BiscuitBuilder {
               Atom { string: Some("authority".to_string()), ..Default::default()},
               Atom { string: Some(resource.to_string()), ..Default::default()},
               Atom { symbol: Some(right.to_string()), ..Default::default() }],
-        }));
+        }.into_predicate()));
     }
 
     #[wasm_bindgen]

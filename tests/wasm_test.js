@@ -11,13 +11,16 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
         wasm.string("file1"),
         wasm.symbol("read")
     ])
+    console.log(fact)
     builder.addAuthorityFact(fact)
 
-    fact = wasm.fact("right", [
+    /*fact = wasm.fact("right", [
         { symbol: "authority" },
         { string: "file2" },
         { symbol: "read" }
-    ])
+    ])*/
+    fact = wasm.Fact.fromString("right(#authority, \"file2\", #read)");
+    console.log(fact)
     builder.addAuthorityFact(fact)
 
     fact = wasm.fact("right", [
@@ -25,6 +28,7 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
         { string: "file1" },
         { symbol: "write" }
     ])
+    console.log(fact)
     builder.addAuthorityFact(fact)
 
     let biscuit = builder.build(keypair)
@@ -37,7 +41,8 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
     console.log(biscuit2.print())
 
     let verifier = new wasm.Verifier()
-    let rule = wasm.rule(
+
+    /*let rule = wasm.rule(
         "right",
         [{ symbol: "right" }],
         [
@@ -46,7 +51,8 @@ exports.create_biscuit_with_authority_fact_and_verify_should_fail_on_caveat = ()
             ids: [{ symbol: "authority" }, { string: "file2" }, { symbol: "write" }]
         }
         ]
-    )
+    )*/
+    let rule = wasm.Rule.fromString("*right(#right) <- right(#authority, \"file2\", #write)")
 
     verifier.addCaveat(rule)
 

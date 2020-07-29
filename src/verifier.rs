@@ -27,7 +27,7 @@ impl Verifier {
 
     #[wasm_bindgen(js_name = addFact)]
     pub fn add_fact(&mut self, fact: Fact) {
-        self.facts.push(builder::Fact(fact.0.into_predicate()));
+        self.facts.push(builder::Fact(fact.0));
     }
 
     #[wasm_bindgen(js_name = addRule)]
@@ -64,17 +64,22 @@ impl Verifier {
 
     #[wasm_bindgen(js_name = revocationCheck)]
     pub fn revocation_check(&mut self, ids: &[i64]) {
-        let caveat = Rule {
-          head_name: "revocation_check".to_string(),
-          head_ids: vec![Atom { variable: Some(0), ..Default::default() }],
-          predicates: vec![Predicate { name: "revocation_id".to_string(), ids: vec![Atom { variable: Some(0), ..Default::default() }] }],
-          constraints: vec![Constraint {
+        let head_name =  "revocation_check".to_string();
+        let mut head_ids = vec![Atom { variable: Some(0), ..Default::default() }];
+        let mut predicates = vec![Predicate { name: "revocation_id".to_string(), ids: vec![Atom { variable: Some(0), ..Default::default() }] }];
+        let mut constraints = vec![Constraint {
             id: 0,
             kind: ConstraintKind::Integer,
             operation: "in".to_string(),
             data: ConstraintData::IntegerSet(ids.iter().cloned().collect()),
-          }],
-        };
+          }];
+
+        let head_ids = head_ids.drain(..).map(|a| a.into_atom()).collect::<Vec<_>>();
+        let predicates = predicates.drain(..).map(|p| p.into_predicate()).collect::<Vec<_>>();
+        let constraints = constraints.drain(..).map(|p| p.into_constraint()).collect::<Vec<_>>();
+
+        let caveat = Rule { rule: builder::constrained_rule(&head_name, &head_ids, &predicates, &constraints) };
+
         self.add_caveat(caveat);
     }
 
