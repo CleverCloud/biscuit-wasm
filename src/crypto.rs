@@ -21,13 +21,7 @@ impl KeyPair {
 
   #[wasm_bindgen(js_name=fromBytes)]
   pub fn from_bytes(slice: &[u8]) -> Result<KeyPair, JsValue> {
-    let mut data = [0u8; 32];
-    if slice.len() != 32 {
-      panic!("invalid key");
-    }
-
-   data.copy_from_slice(slice);
-    if let Some(key) = crypto::PrivateKey::from_bytes(data) {
+    if let Some(key) = crypto::PrivateKey::from_bytes(slice) {
       Ok(KeyPair(crypto::KeyPair::from(key)))
     } else {
       panic!("invalid key");

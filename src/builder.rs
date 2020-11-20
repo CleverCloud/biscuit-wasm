@@ -32,7 +32,7 @@ pub struct Atom {
   pub(crate) string: Option<String>,
   pub(crate) symbol: Option<String>,
   pub(crate) date: Option<u64>,
-  pub(crate) variable: Option<u32>,
+  pub(crate) variable: Option<String>,
 }
 
 impl Atom {
@@ -48,7 +48,7 @@ impl Atom {
     } else if let Some(i) = date {
       builder::Atom::Date(i)
     } else if let Some(i) = variable {
-      builder::variable(i)
+      builder::variable(&i)
     } else {
       panic!("invalid atom: {:?}", Atom { integer, string, symbol, date, variable });
     }
@@ -76,8 +76,8 @@ pub fn date(i: u64) -> JsValue {
 }
 
 #[wasm_bindgen]
-pub fn variable(i: u32) -> JsValue {
-  JsValue::from_serde(&Atom { variable: Some(i), ..Default::default() }).unwrap()
+pub fn variable(s: &str) -> JsValue {
+  JsValue::from_serde(&Atom { variable: Some(s.to_string()), ..Default::default() }).unwrap()
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -128,7 +128,7 @@ pub fn fact(name: &str, ids: JsValue) -> Fact {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct Constraint {
-  pub id: u32,
+  pub id: String,
   pub kind: ConstraintKind,
   pub operation: String,
   pub data: ConstraintData,

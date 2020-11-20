@@ -65,10 +65,12 @@ impl Verifier {
     #[wasm_bindgen(js_name = revocationCheck)]
     pub fn revocation_check(&mut self, ids: &[i64]) {
         let head_name =  "revocation_check".to_string();
-        let mut head_ids = vec![Atom { variable: Some(0), ..Default::default() }];
-        let mut predicates = vec![Predicate { name: "revocation_id".to_string(), ids: vec![Atom { variable: Some(0), ..Default::default() }] }];
+        let mut head_ids = vec![Atom { variable: Some("id".to_string()), ..Default::default() }];
+        let mut predicates = vec![Predicate {
+            name: "revocation_id".to_string(),
+            ids: vec![Atom { variable: Some("id".to_string()), ..Default::default() }] }];
         let mut constraints = vec![Constraint {
-            id: 0,
+            id: "id".to_string(),
             kind: ConstraintKind::Integer,
             operation: "in".to_string(),
             data: ConstraintData::IntegerSet(ids.iter().cloned().collect()),
@@ -84,7 +86,7 @@ impl Verifier {
     }
 
     #[wasm_bindgen]
-    pub fn verify(&self, root_key: &crate::crypto::PublicKey, biscuit: Biscuit) -> Result<(), JsValue> {
+    pub fn verify(&self, root_key: &crate::crypto::PublicKey, biscuit: Biscuit) -> Result<String, JsValue> {
         let mut verifier = biscuit.0.verify(root_key.0)
             .map_err(|e| { let e: crate::error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).expect("error serde"))?;
@@ -103,6 +105,8 @@ impl Verifier {
 
         verifier.verify()
           .map_err(|e| {let e: crate::error::Error = e.into(); e})
-          .map_err(|e| JsValue::from_serde(&e).expect("error serde"))
+          .map_err(|e| JsValue::from_serde(&e).expect("error serde"))?;
+
+        Ok(verifier.print_world())
     }
 }
