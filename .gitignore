@@ -1,3 +1,5 @@
 /target
 **/*.rs.bk
 Cargo.lock
+example/public
+example/node_modules

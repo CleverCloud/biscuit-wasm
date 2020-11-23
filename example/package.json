@@ -5,15 +5,14 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "serve": "webpack-serve --config ./webpack.config.js --static public"
+    "start": "webpack-dev-server"
   },
   "author": "",
   "license": "MIT",
   "dependencies": {
     "biscuit-wasm": "file:../pkg/",
-    "webpack": "^4.41.2",
+    "webpack": "^4.44.2",
     "webpack-cli": "^3.3.10",
-    "webpack-dev-server": "^3.11.0",
-    "webpack-serve": "^3.2.0"
+    "webpack-dev-server": "^3.11.0"
   }
 }
