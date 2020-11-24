@@ -326,7 +326,7 @@ impl BiscuitBuilder {
     pub fn build(self, root: crate::crypto::KeyPair) -> Result<Biscuit, JsValue> {
         let mut rng = OsRng;
         let symbols = self.symbols;
-        let mut builder = token::Biscuit::builder_with_symbols(&mut rng, &root.0, symbols);
+        let mut builder = token::Biscuit::builder_with_symbols(&root.0, symbols);
 
         for fact in self.facts {
           builder.add_authority_fact(fact.into_fact());
@@ -340,7 +340,7 @@ impl BiscuitBuilder {
           builder.add_authority_caveat(caveat.into_rule());
         }
 
-        builder.build()
+        builder.build(&mut rng)
             .map_err(|e| { let e: crate::error::Error = e.into(); e})
             .map_err(|e| JsValue::from_serde(&e).unwrap())
             .map(Biscuit)
