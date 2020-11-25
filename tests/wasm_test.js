@@ -76,11 +76,11 @@ exports.create_block_with_authority_fact_and_verify = () => {
 
     let rules = wasm.rule(
         "caveat1",
-        [{ variable: 0 }],
+        [{ variable: "0" }],
         [
             {
                 name: "resource",
-                ids: [{ symbol: "ambient" }, { variable: 0 }]
+                ids: [{ symbol: "ambient" }, { variable: "0" }]
             },
             {
                 name: "operation",
@@ -88,7 +88,7 @@ exports.create_block_with_authority_fact_and_verify = () => {
             },
             {
                 name: "right",
-                ids: [{ symbol: "authority" }, { variable: 0 }, { symbol: "read" }]
+                ids: [{ symbol: "authority" }, { variable: "0" }, { symbol: "read" }]
             }
         ]
     )
@@ -110,11 +110,11 @@ exports.create_block_with_authority_fact_and_verify = () => {
       // name
       "revocation_check",
       // head ids
-      [{ variable: 0 }],
+      [{ variable: "0" }],
       // predicates
-      [{ name: "revocation_id", ids: [{ variable: 0 }] }],
+      [{ name: "revocation_id", ids: [{ variable: "0" }] }],
       // constraints
-      [{ id: 0, kind: "integer", operation: "in", data: [ 2, 1 ] }])
+      [{ id: "0", kind: "integer", operation: "in", data: [ 2, 1 ] }])
 
     let block3 = biscuit2.createBlock()
     console.table(block3)
